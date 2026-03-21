@@ -1,4 +1,7 @@
 {
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "public": "out",
     "ignore": [
@@ -9,4 +12,3 @@
     "cleanUrls": true
   }
 }
-
