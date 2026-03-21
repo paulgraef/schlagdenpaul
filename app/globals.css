@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sora: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+  --font-space-grotesk: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --background: 222 56% 6%;
+  --foreground: 210 38% 96%;
+  --card: 223 46% 11%;
+  --card-foreground: 210 38% 96%;
+  --primary: 192 95% 55%;
+  --primary-foreground: 223 56% 8%;
+  --secondary: 219 32% 24%;
+  --secondary-foreground: 210 35% 96%;
+  --muted: 223 24% 18%;
+  --muted-foreground: 216 12% 66%;
+  --accent: 347 100% 64%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 352 95% 58%;
+  --border: 219 24% 26%;
+  --input: 219 24% 26%;
+  --ring: 192 95% 55%;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(244, 63, 94, 0.10), transparent 38%),
+    linear-gradient(180deg, #020617 0%, #030712 45%, #020617 100%);
+  min-height: 100vh;
+}
+
+.font-heading {
+  font-family: var(--font-sora), ui-sans-serif, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+}
+
+@keyframes sdp-trace-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
