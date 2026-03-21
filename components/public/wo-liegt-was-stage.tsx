@@ -98,11 +98,13 @@ export function WoLiegtWasStage({ gameTitle, gameState, teams }: WoLiegtWasStage
             </div>
           )}
 
-          <div
-            className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-yellow-400"
-            style={{ left: `${effectiveTarget.x}%`, top: `${effectiveTarget.y}%` }}
-            title="Tatsächlicher Ort"
-          />
+          {state.reveal ? (
+            <div
+              className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-yellow-400"
+              style={{ left: `${effectiveTarget.x}%`, top: `${effectiveTarget.y}%` }}
+              title="Tatsächlicher Ort"
+            />
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/25 p-4">

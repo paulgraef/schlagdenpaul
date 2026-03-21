@@ -38,7 +38,11 @@ async function playFeedback() {
   }
 }
 
-export function BuzzerPageClient() {
+interface BuzzerPageClientProps {
+  mapOnly?: boolean;
+}
+
+export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
   const searchParams = useSearchParams();
   const teamFromQuery = searchParams.get("teamId");
   const { snapshot, pressBuzzer, setGameMetadata } = useEventStore((state) => state);
@@ -58,10 +62,15 @@ export function BuzzerPageClient() {
     () => snapshot.games.find((game) => game.status === "active") ?? snapshot.games[0],
     [snapshot.games]
   );
-  const isWoLiegtWas = activeGame?.slug === "wo-liegt-was";
+  const woLiegtWasGame = useMemo(
+    () => snapshot.games.find((game) => game.slug === "wo-liegt-was") ?? null,
+    [snapshot.games]
+  );
+  const gameForView = mapOnly && woLiegtWasGame ? woLiegtWasGame : activeGame;
+  const isWoLiegtWas = gameForView?.slug === "wo-liegt-was";
   const woLiegtWasState = useMemo(
-    () => getWoLiegtWasState(snapshot.gameStates[activeGame.id]?.metadata ?? {}, snapshot.teams.map((team) => team.id)),
-    [snapshot.gameStates, activeGame.id, snapshot.teams]
+    () => getWoLiegtWasState(snapshot.gameStates[gameForView.id]?.metadata ?? {}, snapshot.teams.map((team) => team.id)),
+    [snapshot.gameStates, gameForView.id, snapshot.teams]
   );
   const currentLocation = WO_LIEGT_WAS_LOCATIONS[woLiegtWasState.locationIndex] ?? WO_LIEGT_WAS_LOCATIONS[0];
 
@@ -86,7 +95,7 @@ export function BuzzerPageClient() {
     const y = ((event.clientY - rect.top) / rect.height) * 100;
     const point = normalizePoint({ x, y });
 
-    setGameMetadata(activeGame.id, {
+    setGameMetadata(gameForView.id, {
       woLiegtWas: {
         ...woLiegtWasState,
         reveal: false,
@@ -124,7 +133,7 @@ export function BuzzerPageClient() {
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-6 md:py-10">
       <Card className="bg-black/40">
         <CardHeader>
-          <CardTitle>Team Buzzer</CardTitle>
+          <CardTitle>{mapOnly ? "Team Karte" : "Team Buzzer"}</CardTitle>
           <CardDescription>
             Team: <span style={{ color: selectedTeam.color }}>{selectedTeam.name}</span>
           </CardDescription>
@@ -164,6 +173,10 @@ export function BuzzerPageClient() {
                 ) : null}
               </div>
             </>
+          ) : mapOnly ? (
+            <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-muted-foreground">
+              Spiel „Wo liegt was?“ ist aktuell nicht verfügbar.
+            </div>
           ) : (
             <BuzzerButton
               teamColor={selectedTeam.color}
@@ -177,4 +190,3 @@ export function BuzzerPageClient() {
     </main>
   );
 }
-

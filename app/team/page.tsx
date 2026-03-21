@@ -8,11 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function TeamSelectPage() {
   const router = useRouter();
-  const teams = useEventStore((state) => state.snapshot.teams);
+  const snapshot = useEventStore((state) => state.snapshot);
+  const teams = snapshot.teams;
+  const activeGame = snapshot.games.find((game) => game.status === "active") ?? snapshot.games[0];
 
   function selectTeam(teamId: string) {
     localStorage.setItem("sdp_team_id", teamId);
-    router.push(`/buzzer?teamId=${teamId}`);
+    const targetPath = activeGame?.slug === "wo-liegt-was" ? "/karte" : "/buzzer";
+    router.push(`${targetPath}?teamId=${teamId}`);
   }
 
   return (
