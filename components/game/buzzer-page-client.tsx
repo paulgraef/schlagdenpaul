@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -73,6 +73,17 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
     [snapshot.gameStates, gameForView.id, snapshot.teams]
   );
   const currentLocation = WO_LIEGT_WAS_LOCATIONS[woLiegtWasState.locationIndex] ?? WO_LIEGT_WAS_LOCATIONS[0];
+  const submittedGuess = selectedTeam ? woLiegtWasState.guesses[selectedTeam.id] : null;
+  const hasSubmitted = Boolean(submittedGuess);
+  const [draftPin, setDraftPin] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (submittedGuess) {
+      setDraftPin({ x: submittedGuess.x, y: submittedGuess.y });
+      return;
+    }
+    setDraftPin(null);
+  }, [selectedTeam?.id, woLiegtWasState.locationIndex, submittedGuess?.x, submittedGuess?.y]);
 
   async function handleBuzz() {
     if (!selectedTeam) {
@@ -86,7 +97,7 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
   }
 
   function setPin(event: MouseEvent<HTMLDivElement>) {
-    if (!selectedTeam || !isWoLiegtWas) {
+    if (!selectedTeam || !isWoLiegtWas || hasSubmitted) {
       return;
     }
 
@@ -94,7 +105,13 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
     const point = normalizePoint({ x, y });
+    setDraftPin(point);
+  }
 
+  function confirmPin() {
+    if (!selectedTeam || !isWoLiegtWas || !draftPin) {
+      return;
+    }
     setGameMetadata(gameForView.id, {
       woLiegtWas: {
         ...woLiegtWasState,
@@ -103,7 +120,7 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
         guesses: {
           ...woLiegtWasState.guesses,
           [selectedTeam.id]: {
-            ...point,
+            ...draftPin,
             placedAt: new Date().toISOString()
           }
         }
@@ -144,9 +161,15 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
               <div className="rounded-xl border border-white/10 bg-black/25 p-3">
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Aktuelle Runde</p>
                 <p className="text-lg font-semibold">Setze deinen Pin auf: {currentLocation.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  Dein Pin wird gespeichert. Die Auflösung wird erst nach Freigabe im Dashboard angezeigt.
-                </p>
+                {hasSubmitted ? (
+                  <p className="text-xs text-emerald-300">
+                    Pin abgegeben. Warte auf Freigabe im Dashboard.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Klicke auf die Karte und bestätige dann mit „Pin bestätigen“.
+                  </p>
+                )}
               </div>
 
               <div className="relative mx-auto aspect-[3/4] w-full max-w-[420px] overflow-hidden rounded-2xl border border-white/10 bg-[#ececec]">
@@ -160,18 +183,22 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
                   />
                 </div>
 
-                {woLiegtWasState.guesses[selectedTeam.id] ? (
+                {draftPin ? (
                   <div
                     className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
                     style={{
-                      left: `${woLiegtWasState.guesses[selectedTeam.id]?.x ?? 0}%`,
-                      top: `${woLiegtWasState.guesses[selectedTeam.id]?.y ?? 0}%`,
+                      left: `${draftPin.x}%`,
+                      top: `${draftPin.y}%`,
                       backgroundColor: selectedTeam.color
                     }}
                     title="Dein Pin"
                   />
                 ) : null}
               </div>
+
+              <Button onClick={confirmPin} disabled={!draftPin || hasSubmitted}>
+                Pin bestätigen
+              </Button>
             </>
           ) : mapOnly ? (
             <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-muted-foreground">

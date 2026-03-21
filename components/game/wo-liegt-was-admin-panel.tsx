@@ -117,7 +117,7 @@ export function WoLiegtWasAdminPanel({
           <div className="mt-2 space-y-1">
             {teams.map((team) => (
               <p key={team.id} className="text-sm" style={{ color: team.color }}>
-                {team.name}: {state.guesses[team.id] ? "Pin gesetzt" : "wartet auf Pin"}
+                {team.name}: {state.guesses[team.id] ? "abgegeben" : "wartet auf Abgabe"}
               </p>
             ))}
           </div>
