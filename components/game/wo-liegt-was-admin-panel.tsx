@@ -41,6 +41,9 @@ export function WoLiegtWasAdminPanel({
 
   const [selectedTeamId, setSelectedTeamId] = useState<string>(teamIds[0] ?? "");
   const [targetingMode, setTargetingMode] = useState(false);
+  const [cursorPoint, setCursorPoint] = useState<{ x: number; y: number } | null>(null);
+  const [calibrationPoint, setCalibrationPoint] = useState<{ x: number; y: number } | null>(null);
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!teamIds.length) {
@@ -68,15 +71,10 @@ export function WoLiegtWasAdminPanel({
     const point = normalizePoint({ x, y });
 
     if (targetingMode) {
-      persist({
-        ...state,
-        reveal: false,
-        roundAwarded: false,
-        targets: {
-          ...state.targets,
-          [location.id]: point
-        }
-      });
+      setCalibrationPoint(point);
+      setCopyStatus(
+        `Vorschlag (nicht gespeichert): ${location.id}: { x: ${point.x.toFixed(2)}, y: ${point.y.toFixed(2)} }`
+      );
       return;
     }
 
@@ -96,6 +94,32 @@ export function WoLiegtWasAdminPanel({
         }
       }
     });
+  }
+
+  function updateCursor(event: MouseEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    const point = normalizePoint({ x, y });
+    setCursorPoint(point);
+  }
+
+  function leaveCursor() {
+    setCursorPoint(null);
+  }
+
+  async function copyCurrentPoint() {
+    const payload = `${location.id}: { x: ${effectiveTarget.x.toFixed(2)}, y: ${effectiveTarget.y.toFixed(2)} }`;
+    await navigator.clipboard.writeText(payload);
+    setCopyStatus("Koordinate kopiert");
+  }
+
+  async function copyAllTargets() {
+    const allTargets = Object.fromEntries(
+      WO_LIEGT_WAS_LOCATIONS.map((entry, index) => [entry.id, getLocationTarget(state, index)])
+    );
+    await navigator.clipboard.writeText(JSON.stringify(allTargets, null, 2));
+    setCopyStatus("Alle Zielkoordinaten als JSON kopiert");
   }
 
   function resetPins() {
@@ -186,7 +210,12 @@ export function WoLiegtWasAdminPanel({
         </div>
 
         <div className="relative mx-auto aspect-[3/4] w-full max-w-[420px] overflow-hidden rounded-2xl border border-white/10 bg-[#ececec]">
-          <div className="absolute inset-0 cursor-crosshair" onClick={updatePin}>
+          <div
+            className="absolute inset-0 cursor-crosshair"
+            onClick={updatePin}
+            onMouseMove={updateCursor}
+            onMouseLeave={leaveCursor}
+          >
             <Image
               src="/media/laenderumrisse/item-04.svg"
               alt="Deutschland Karte"
@@ -225,8 +254,40 @@ export function WoLiegtWasAdminPanel({
 
         <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-xs text-muted-foreground">
           {targetingMode
-            ? `Kalibrier-Modus: Klicke auf der Karte genau auf ${location.name}, um den Zielpunkt zu speichern.`
+            ? `Kalibrier-Modus: Klicke auf der Karte genau auf ${location.name}. Es wird nur ein Vorschlag angezeigt, nichts gespeichert.`
             : `Aktueller Zielpunkt für ${location.name}: x=${effectiveTarget.x.toFixed(1)}%, y=${effectiveTarget.y.toFixed(1)}%`}
+          {cursorPoint ? (
+            <p className="mt-1">Mausposition: x={cursorPoint.x.toFixed(1)}%, y={cursorPoint.y.toFixed(1)}%</p>
+          ) : null}
+          {calibrationPoint ? (
+            <p className="mt-1">
+              Letzter Vorschlag: x={calibrationPoint.x.toFixed(1)}%, y={calibrationPoint.y.toFixed(1)}%
+            </p>
+          ) : null}
+          {copyStatus ? <p className="mt-1 text-cyan-300">{copyStatus}</p> : null}
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button variant="outline" onClick={() => void copyCurrentPoint()}>
+            Aktuelle Ort-Koordinate kopieren
+          </Button>
+          <Button variant="outline" onClick={() => void copyAllTargets()}>
+            Alle Zielkoordinaten kopieren (JSON)
+          </Button>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Alle Ort-Koordinaten</p>
+          <div className="mt-2 grid gap-1">
+            {WO_LIEGT_WAS_LOCATIONS.map((entry, index) => {
+              const point = getLocationTarget(state, index);
+              return (
+                <p key={entry.id} className="font-mono text-xs text-muted-foreground">
+                  {entry.id}: x={point.x.toFixed(1)} y={point.y.toFixed(1)}
+                </p>
+              );
+            })}
+          </div>
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

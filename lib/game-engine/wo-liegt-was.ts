@@ -18,21 +18,20 @@ export interface WoLiegtWasState {
   reveal: boolean;
   guesses: Record<string, WoLiegtWasTeamGuess | null>;
   points: Record<string, number>;
-  targets: Record<string, WoLiegtWasPoint>;
   roundAwarded: boolean;
 }
 
 export const WO_LIEGT_WAS_LOCATIONS: WoLiegtWasLocation[] = [
-  { id: "berlin", name: "Berlin", target: { x: 66, y: 36 } },
-  { id: "wuerzburg", name: "Würzburg", target: { x: 53, y: 54 } },
-  { id: "muenchen", name: "München", target: { x: 60, y: 77 } },
-  { id: "kiel", name: "Kiel", target: { x: 47, y: 12 } },
-  { id: "dortmund", name: "Dortmund", target: { x: 34, y: 43 } },
-  { id: "stuttgart", name: "Stuttgart", target: { x: 42, y: 66 } },
-  { id: "bacharach", name: "Bacharach", target: { x: 33, y: 56 } },
-  { id: "cottbus", name: "Cottbus", target: { x: 78, y: 43 } },
-  { id: "hannover", name: "Hannover", target: { x: 46, y: 33 } },
-  { id: "zwickau", name: "Zwickau", target: { x: 62, y: 58 } }
+  { id: "berlin", name: "Berlin", target: { x: 69.6, y: 39.2 } },
+  { id: "wuerzburg", name: "Würzburg", target: { x: 43.8, y: 62.7 } },
+  { id: "muenchen", name: "München", target: { x: 55.3, y: 77.6 } },
+  { id: "kiel", name: "Kiel", target: { x: 44.1, y: 22.4 } },
+  { id: "dortmund", name: "Dortmund", target: { x: 27.5, y: 49.5 } },
+  { id: "stuttgart", name: "Stuttgart", target: { x: 37.08, y: 71.51 } },
+  { id: "bacharach", name: "Bacharach", target: { x: 26.32, y: 61.29 } },
+  { id: "cottbus", name: "Cottbus", target: { x: 74.88, y: 45.34 } },
+  { id: "hannover", name: "Hannover", target: { x: 41.39, y: 40.68 } },
+  { id: "zwickau", name: "Zwickau", target: { x: 62.92, y: 56.27 } }
 ];
 
 function clampPercent(value: number): number {
@@ -60,7 +59,6 @@ export function createInitialWoLiegtWasState(teamIds: string[]): WoLiegtWasState
     reveal: false,
     guesses,
     points,
-    targets: {},
     roundAwarded: false
   };
 }
@@ -111,30 +109,18 @@ export function getWoLiegtWasState(
     points[teamId] = typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
   }
 
-  const rawTargets = asRecord(raw.targets);
-  const targets: WoLiegtWasState["targets"] = {};
-  for (const location of WO_LIEGT_WAS_LOCATIONS) {
-    const entry = asRecord(rawTargets[location.id]);
-    const x = entry.x;
-    const y = entry.y;
-    if (typeof x === "number" && Number.isFinite(x) && typeof y === "number" && Number.isFinite(y)) {
-      targets[location.id] = normalizePoint({ x, y });
-    }
-  }
-
   return {
     locationIndex,
     reveal,
     guesses,
     points,
-    targets,
     roundAwarded
   };
 }
 
 export function getLocationTarget(state: WoLiegtWasState, locationIndex: number): WoLiegtWasPoint {
   const location = WO_LIEGT_WAS_LOCATIONS[locationIndex] ?? WO_LIEGT_WAS_LOCATIONS[0];
-  return state.targets[location.id] ?? location.target;
+  return location.target;
 }
 
 export function getRoundDistances(

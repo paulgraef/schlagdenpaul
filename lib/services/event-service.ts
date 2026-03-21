@@ -1,14 +1,13 @@
 "use client";
 
-import { createDemoSnapshot } from "@/config/demo-data";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { EventSnapshot } from "@/types/domain";
 
-export async function loadEventSnapshot(eventSlug: string): Promise<EventSnapshot> {
+export async function loadEventSnapshot(eventSlug: string): Promise<EventSnapshot | null> {
   const supabase = getSupabaseBrowserClient();
 
   if (!supabase) {
-    return createDemoSnapshot();
+    return null;
   }
 
   const { data: eventRow } = await supabase
@@ -18,10 +17,10 @@ export async function loadEventSnapshot(eventSlug: string): Promise<EventSnapsho
     .single();
 
   if (!eventRow) {
-    return createDemoSnapshot();
+    return null;
   }
 
-  // For v1 fallback we still return the local shape if database mapping is incomplete.
-  // This keeps the app usable without a fully provisioned backend.
-  return createDemoSnapshot();
+  // For v1 fallback we keep local persisted state until a real DB snapshot mapping exists.
+  // Returning null prevents overwriting local calibration/game progress on reload.
+  return null;
 }

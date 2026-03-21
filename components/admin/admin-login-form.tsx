@@ -35,8 +35,7 @@ export function AdminLoginForm() {
     }
 
     localStorage.setItem(ADMIN_AUTH_KEY, "1");
-    router.push("/admin");
-    router.refresh();
+    window.location.href = "/admin";
   }
 
   return (

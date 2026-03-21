@@ -10,8 +10,7 @@ export function AdminHeader() {
 
   function logout() {
     localStorage.removeItem(ADMIN_AUTH_KEY);
-    router.push("/admin");
-    router.refresh();
+    window.location.href = "/admin";
   }
 
   return (

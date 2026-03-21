@@ -5,7 +5,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { createDemoSnapshot } from "@/config/demo-data";
 import { claimLocalBuzzer } from "@/lib/game-engine/buzzer";
 import { createMemoryBoard } from "@/lib/game-engine/memory";
-import { getWoLiegtWasState } from "@/lib/game-engine/wo-liegt-was";
 import { recomputeScores } from "@/lib/game-engine/scoring";
 import { makePatch, emitRealtimePatch } from "@/lib/realtime/realtime";
 import { getEventSlug } from "@/lib/supabase/env";
@@ -577,32 +576,7 @@ export const useEventStore = create<EventStore>()(
       },
 
       resetAll: () => {
-        const currentSnapshot = get().snapshot;
-        const currentGame = currentSnapshot.games.find((game) => game.slug === "wo-liegt-was") ?? null;
-        const currentTargets =
-          currentGame
-            ? getWoLiegtWasState(
-                currentSnapshot.gameStates[currentGame.id]?.metadata ?? {},
-                currentSnapshot.teams.map((team) => team.id)
-              ).targets
-            : {};
-
         const snapshot = recalc(createDemoSnapshot());
-        const nextGame = snapshot.games.find((game) => game.slug === "wo-liegt-was") ?? null;
-        if (nextGame && Object.keys(currentTargets).length > 0) {
-          const gameState = snapshot.gameStates[nextGame.id];
-          snapshot.gameStates[nextGame.id] = {
-            ...gameState,
-            metadata: {
-              ...gameState.metadata,
-              woLiegtWas: {
-                ...getWoLiegtWasState(gameState.metadata, snapshot.teams.map((team) => team.id)),
-                targets: currentTargets
-              }
-            }
-          };
-        }
-
         set({
           snapshot,
           eventSlug: snapshot.event.slug,

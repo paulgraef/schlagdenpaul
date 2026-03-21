@@ -16,7 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     async function bootstrap() {
       const snapshot = await loadEventSnapshot(eventSlug);
-      if (!canceled) {
+      if (!canceled && snapshot) {
         replaceSnapshot(snapshot, { broadcast: false });
       }
     }
