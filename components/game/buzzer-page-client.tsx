@@ -259,25 +259,71 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
                   />
                 </div>
 
-                {(() => {
-                  const activeTeamGuess = activeTeam ? woLiegtWasState.guesses[activeTeam.id] : null;
-                  const point = activeTeam && draftPin && !activeTeamGuess ? draftPin : activeTeamGuess;
-                  if (!point || !activeTeam) {
-                    return null;
-                  }
+                {showLocalResult ? (
+                  <>
+                    <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                      {orderedTeams.map((team) => {
+                        const teamGuess = woLiegtWasState.guesses[team.id];
+                        if (!teamGuess) {
+                          return null;
+                        }
 
-                  return (
-                    <div
-                      className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
-                      style={{
-                        left: `${point.x}%`,
-                        top: `${point.y}%`,
-                        backgroundColor: activeTeam.color
-                      }}
-                      title={`Pin ${activeTeam.name}`}
-                    />
-                  );
-                })()}
+                        return (
+                          <line
+                            key={`line-${team.id}`}
+                            x1={teamGuess.x}
+                            y1={teamGuess.y}
+                            x2={targetPoint.x}
+                            y2={targetPoint.y}
+                            stroke={team.color}
+                            strokeWidth="0.8"
+                            strokeDasharray="2 1"
+                            opacity="0.95"
+                          />
+                        );
+                      })}
+                    </svg>
+                    {orderedTeams.map((team) => {
+                      const teamGuess = woLiegtWasState.guesses[team.id];
+                      if (!teamGuess) {
+                        return null;
+                      }
+
+                      return (
+                        <div
+                          key={`pin-${team.id}`}
+                          className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+                          style={{
+                            left: `${teamGuess.x}%`,
+                            top: `${teamGuess.y}%`,
+                            backgroundColor: team.color
+                          }}
+                          title={`Pin ${team.name}`}
+                        />
+                      );
+                    })}
+                  </>
+                ) : (
+                  (() => {
+                    const activeTeamGuess = activeTeam ? woLiegtWasState.guesses[activeTeam.id] : null;
+                    const point = activeTeam && draftPin && !activeTeamGuess ? draftPin : activeTeamGuess;
+                    if (!point || !activeTeam) {
+                      return null;
+                    }
+
+                    return (
+                      <div
+                        className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+                        style={{
+                          left: `${point.x}%`,
+                          top: `${point.y}%`,
+                          backgroundColor: activeTeam.color
+                        }}
+                        title={`Pin ${activeTeam.name}`}
+                      />
+                    );
+                  })()
+                )}
 
                 {showLocalResult ? (
                   <div
