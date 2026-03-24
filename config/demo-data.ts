@@ -31,10 +31,10 @@ const gameSlugOverrides: Record<number, string> = {
   4: "wo-liegt-was",
   5: "flaggen",
   7: "wer-luegt",
-  10: "deutschland",
-  11: "memory",
+  10: "memory",
+  12: "muenze",
   14: "sortieren",
-  15: "muenze"
+  15: "501"
 };
 
 const teams: TeamEntity[] = [

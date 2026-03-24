@@ -146,9 +146,32 @@ function normalizeMemoryRuntime(input: unknown, snapshot: EventSnapshot): Memory
 }
 
 function recalc(snapshot: EventSnapshot): EventSnapshot {
+  const gameLayoutByNumber: Record<number, { title: string; slug: string }> = {
+    9: { title: "Geoguesser", slug: "geoguesser" },
+    10: { title: "Memory", slug: "memory" },
+    11: { title: "Wettessen", slug: "wettessen" },
+    12: { title: "Münze", slug: "muenze" },
+    13: { title: "Luft anhalten", slug: "luft-anhalten" },
+    14: { title: "Sortieren", slug: "sortieren" },
+    15: { title: "501", slug: "501" }
+  };
+
+  const normalizedGames = snapshot.games.map((game) => {
+    const override = gameLayoutByNumber[game.gameNumber];
+    if (!override) {
+      return game;
+    }
+    return {
+      ...game,
+      title: override.title,
+      slug: override.slug
+    };
+  });
+
   return {
     ...snapshot,
-    scores: recomputeScores(snapshot.games, snapshot.teams, snapshot.event.id, snapshot.scores)
+    games: normalizedGames,
+    scores: recomputeScores(normalizedGames, snapshot.teams, snapshot.event.id, snapshot.scores)
   };
 }
 

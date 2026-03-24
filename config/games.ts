@@ -7,11 +7,11 @@ export const GAME_TITLES: string[] = [
   "Golf",
   "Wer lügt?",
   "Biathlon",
-  "Luft anhalten",
-  "Deutschland",
+  "Geoguesser",
   "Memory",
-  "501",
   "Wettessen",
+  "Münze",
+  "Luft anhalten",
   "Sortieren",
-  "Münze"
+  "501"
 ];

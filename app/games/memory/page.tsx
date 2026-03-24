@@ -10,8 +10,10 @@ import { MEMORY_PAIR_COUNT } from "@/config/memory-images";
 
 export default function MemoryPage() {
   const { memory, flipMemoryCard, initializeMemory, resetMemory } = useEventStore((state) => state);
-  const teams = useEventStore((state) =>
-    state.snapshot.teams.slice().sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 2)
+  const allTeams = useEventStore((state) => state.snapshot.teams);
+  const teams = useMemo(
+    () => allTeams.slice().sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 2),
+    [allTeams]
   );
 
   const matchedPairs = useMemo(() => {
