@@ -1,7 +1,6 @@
 import { createId } from "@/lib/utils";
+import { MEMORY_IMAGE_SOURCES } from "@/config/memory-images";
 import type { MemoryCardModel } from "@/types/domain";
-
-const ICON_POOL = ["\u2605", "\u25c6", "\u25cf", "\u25b2", "\u25a0", "\u2665", "\u2666", "\u2663", "\u2660", "\u2726", "\u2731", "\u272a"];
 
 function shuffle<T>(items: T[]): T[] {
   const array = [...items];
@@ -12,17 +11,16 @@ function shuffle<T>(items: T[]): T[] {
   return array;
 }
 
-export function createMemoryBoard(pairCount: number): MemoryCardModel[] {
-  const pairs = Array.from({ length: pairCount }).map((_, idx) => {
+export function createMemoryBoard(imageSources: string[] = MEMORY_IMAGE_SOURCES): MemoryCardModel[] {
+  const pairs = imageSources.map((source, idx) => {
     const pairId = `pair_${idx + 1}`;
-    const icon = ICON_POOL[idx % ICON_POOL.length];
     const label = `Pair ${idx + 1}`;
 
     const cardA: MemoryCardModel = {
       id: createId("mem"),
       pairId,
       label,
-      icon,
+      icon: source,
       matched: false,
       faceUp: false
     };
@@ -31,7 +29,7 @@ export function createMemoryBoard(pairCount: number): MemoryCardModel[] {
       id: createId("mem"),
       pairId,
       label,
-      icon,
+      icon: source,
       matched: false,
       faceUp: false
     };

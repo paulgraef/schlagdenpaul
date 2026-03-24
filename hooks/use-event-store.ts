@@ -15,8 +15,10 @@ interface MemoryRuntime {
   cards: MemoryCardModel[];
   selectedIds: string[];
   moves: number;
-  startedAt: string | null;
+  currentTeamId: string | null;
+  teamPairCounts: Record<string, number>;
   finishedAt: string | null;
+  winnerTeamId: string | null;
 }
 
 interface EventStore {
@@ -55,7 +57,7 @@ interface EventStore {
   pressBuzzer: (teamId: string, teamMemberId?: string | null, options?: { broadcast?: boolean }) => Promise<boolean>;
   resetBuzzer: (options?: { broadcast?: boolean }) => void;
   resetAll: () => void;
-  initializeMemory: (pairs: number) => void;
+  initializeMemory: () => void;
   flipMemoryCard: (cardId: string) => void;
   resetMemory: () => void;
   applyRealtimePatch: (patch: RealtimePatch) => void;
@@ -63,13 +65,23 @@ interface EventStore {
 
 const initialSnapshot = createDemoSnapshot();
 
-function nextMemory(pairs = 8): MemoryRuntime {
+function getMemoryTeamIds(snapshot: EventSnapshot): string[] {
+  return snapshot.teams
+    .slice()
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, 2)
+    .map((team) => team.id);
+}
+
+function nextMemory(teamIds: string[] = []): MemoryRuntime {
   return {
-    cards: createMemoryBoard(pairs),
+    cards: createMemoryBoard(),
     selectedIds: [],
     moves: 0,
-    startedAt: null,
-    finishedAt: null
+    currentTeamId: teamIds[0] ?? null,
+    teamPairCounts: Object.fromEntries(teamIds.map((teamId) => [teamId, 0])),
+    finishedAt: null,
+    winnerTeamId: null
   };
 }
 
@@ -85,7 +97,7 @@ export const useEventStore = create<EventStore>()(
     (set, get) => ({
       snapshot: recalc(initialSnapshot),
       eventSlug: getEventSlug(),
-      memory: nextMemory(),
+      memory: nextMemory(getMemoryTeamIds(initialSnapshot)),
 
       replaceSnapshot: (snapshot, options) => {
         const next = recalc(snapshot);
@@ -498,10 +510,10 @@ export const useEventStore = create<EventStore>()(
         }
       },
 
-      initializeMemory: (pairs) => {
-        set({
-          memory: nextMemory(pairs)
-        });
+      initializeMemory: () => {
+        set((state) => ({
+          memory: nextMemory(getMemoryTeamIds(state.snapshot))
+        }));
       },
 
       flipMemoryCard: (cardId) => {
@@ -518,7 +530,10 @@ export const useEventStore = create<EventStore>()(
             entry.id === cardId ? { ...entry, faceUp: true } : entry
           );
           const selectedIds = [...state.memory.selectedIds, cardId];
-          const startedAt = state.memory.startedAt ?? new Date().toISOString();
+          const currentTeamId = state.memory.currentTeamId;
+          const orderedTeamIds = getMemoryTeamIds(state.snapshot);
+          const fallbackTeamId = orderedTeamIds[0] ?? null;
+          const activeTeamId = currentTeamId ?? fallbackTeamId;
 
           if (selectedIds.length === 2) {
             const selectedCards = cards.filter((entry) => selectedIds.includes(entry.id));
@@ -544,6 +559,29 @@ export const useEventStore = create<EventStore>()(
             });
 
             const allMatched = resolvedCards.every((entry) => entry.matched);
+            const teamPairCounts = { ...state.memory.teamPairCounts };
+
+            if (matched && activeTeamId) {
+              teamPairCounts[activeTeamId] = (teamPairCounts[activeTeamId] ?? 0) + 1;
+            }
+
+            let nextTeamId = activeTeamId;
+            if (!matched) {
+              const alternativeTeamId = orderedTeamIds.find((teamId) => teamId !== activeTeamId) ?? activeTeamId;
+              nextTeamId = alternativeTeamId ?? null;
+            }
+
+            let winnerTeamId: string | null = null;
+            if (allMatched && orderedTeamIds.length > 0) {
+              const [firstTeamId, secondTeamId] = orderedTeamIds;
+              const firstScore = teamPairCounts[firstTeamId] ?? 0;
+              const secondScore = secondTeamId ? (teamPairCounts[secondTeamId] ?? 0) : -1;
+              if (firstScore === secondScore) {
+                winnerTeamId = null;
+              } else {
+                winnerTeamId = firstScore > secondScore ? firstTeamId : (secondTeamId ?? firstTeamId);
+              }
+            }
 
             return {
               memory: {
@@ -551,8 +589,10 @@ export const useEventStore = create<EventStore>()(
                 cards: resolvedCards,
                 selectedIds: [],
                 moves: state.memory.moves + 1,
-                startedAt,
-                finishedAt: allMatched ? new Date().toISOString() : state.memory.finishedAt
+                currentTeamId: nextTeamId,
+                teamPairCounts,
+                finishedAt: allMatched ? new Date().toISOString() : state.memory.finishedAt,
+                winnerTeamId
               }
             };
           }
@@ -561,18 +601,16 @@ export const useEventStore = create<EventStore>()(
             memory: {
               ...state.memory,
               cards,
-              selectedIds,
-              startedAt
+              selectedIds
             }
           };
         });
       },
 
       resetMemory: () => {
-        const pairs = Number(get().snapshot.memorySession.boardState.pairs ?? 8);
-        set({
-          memory: nextMemory(pairs)
-        });
+        set((state) => ({
+          memory: nextMemory(getMemoryTeamIds(state.snapshot))
+        }));
       },
 
       resetAll: () => {
@@ -580,7 +618,7 @@ export const useEventStore = create<EventStore>()(
         set({
           snapshot,
           eventSlug: snapshot.event.slug,
-          memory: nextMemory()
+          memory: nextMemory(getMemoryTeamIds(snapshot))
         });
       },
 

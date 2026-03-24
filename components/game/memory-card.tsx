@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { MemoryCardModel } from "@/types/domain";
 
@@ -30,13 +31,13 @@ export function MemoryCard({ card, onClick }: MemoryCardProps) {
 
         <div
           className={cn(
-            "absolute inset-0 flex items-center justify-center rounded-2xl border bg-gradient-to-br text-3xl [backface-visibility:hidden] [transform:rotateY(180deg)]",
+            "absolute inset-0 overflow-hidden rounded-2xl border bg-gradient-to-br [backface-visibility:hidden] [transform:rotateY(180deg)]",
             card.matched
               ? "border-emerald-300/50 from-emerald-500/35 to-emerald-700/20"
               : "border-primary/40 from-cyan-500/25 to-blue-700/10"
           )}
         >
-          {card.icon}
+          <Image src={card.icon} alt={card.label} fill className="object-cover" unoptimized />
         </div>
       </motion.div>
     </button>
