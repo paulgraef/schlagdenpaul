@@ -6,7 +6,14 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEventStore } from "@/hooks/use-event-store";
 import { BuzzerButton } from "@/components/game/buzzer-button";
-import { getWoLiegtWasState, normalizePoint, WO_LIEGT_WAS_LOCATIONS } from "@/lib/game-engine/wo-liegt-was";
+import {
+  getLocationTarget,
+  getRoundDistances,
+  getRoundWinnerTeamId,
+  getWoLiegtWasState,
+  normalizePoint,
+  WO_LIEGT_WAS_LOCATIONS
+} from "@/lib/game-engine/wo-liegt-was";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -68,14 +75,36 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
   );
   const gameForView = mapOnly && woLiegtWasGame ? woLiegtWasGame : activeGame;
   const isWoLiegtWas = gameForView?.slug === "wo-liegt-was";
+  const orderedTeams = useMemo(
+    () => snapshot.teams.slice().sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 2),
+    [snapshot.teams]
+  );
+  const [mapSelectedTeamId, setMapSelectedTeamId] = useState<string>("");
+  const [showLocalResult, setShowLocalResult] = useState(false);
   const woLiegtWasState = useMemo(
     () => getWoLiegtWasState(snapshot.gameStates[gameForView.id]?.metadata ?? {}, snapshot.teams.map((team) => team.id)),
     [snapshot.gameStates, gameForView.id, snapshot.teams]
   );
+  useEffect(() => {
+    if (!mapOnly || !orderedTeams.length) {
+      return;
+    }
+    if (!mapSelectedTeamId || !orderedTeams.some((team) => team.id === mapSelectedTeamId)) {
+      setMapSelectedTeamId(orderedTeams[0].id);
+    }
+  }, [mapOnly, mapSelectedTeamId, orderedTeams]);
+
+  const activeTeam = mapOnly
+    ? orderedTeams.find((team) => team.id === mapSelectedTeamId) ?? null
+    : selectedTeam;
   const currentLocation = WO_LIEGT_WAS_LOCATIONS[woLiegtWasState.locationIndex] ?? WO_LIEGT_WAS_LOCATIONS[0];
-  const submittedGuess = selectedTeam ? woLiegtWasState.guesses[selectedTeam.id] : null;
+  const submittedGuess = activeTeam ? woLiegtWasState.guesses[activeTeam.id] : null;
   const hasSubmitted = Boolean(submittedGuess);
   const [draftPin, setDraftPin] = useState<{ x: number; y: number } | null>(null);
+  const allPinsSet = orderedTeams.length > 0 && orderedTeams.every((team) => Boolean(woLiegtWasState.guesses[team.id]));
+  const localDistances = getRoundDistances(woLiegtWasState);
+  const localWinnerTeamId = getRoundWinnerTeamId(woLiegtWasState);
+  const targetPoint = getLocationTarget(woLiegtWasState, woLiegtWasState.locationIndex);
 
   useEffect(() => {
     if (submittedGuess) {
@@ -83,7 +112,11 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
       return;
     }
     setDraftPin(null);
-  }, [selectedTeam?.id, woLiegtWasState.locationIndex, submittedGuess?.x, submittedGuess?.y]);
+  }, [activeTeam?.id, woLiegtWasState.locationIndex, submittedGuess]);
+
+  useEffect(() => {
+    setShowLocalResult(false);
+  }, [woLiegtWasState.locationIndex]);
 
   async function handleBuzz() {
     if (!selectedTeam) {
@@ -97,7 +130,7 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
   }
 
   function setPin(event: MouseEvent<HTMLDivElement>) {
-    if (!selectedTeam || !isWoLiegtWas || hasSubmitted) {
+    if (!activeTeam || !isWoLiegtWas || hasSubmitted) {
       return;
     }
 
@@ -109,7 +142,7 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
   }
 
   function confirmPin() {
-    if (!selectedTeam || !isWoLiegtWas || !draftPin) {
+    if (!activeTeam || !isWoLiegtWas || !draftPin) {
       return;
     }
     setGameMetadata(gameForView.id, {
@@ -119,16 +152,24 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
         roundAwarded: false,
         guesses: {
           ...woLiegtWasState.guesses,
-          [selectedTeam.id]: {
+          [activeTeam.id]: {
             ...draftPin,
             placedAt: new Date().toISOString()
           }
         }
       }
     });
+    setShowLocalResult(false);
   }
 
-  if (!selectedTeam) {
+  function revealOnThisDevice() {
+    if (!allPinsSet) {
+      return;
+    }
+    setShowLocalResult(true);
+  }
+
+  if (!mapOnly && !selectedTeam) {
     return (
       <main className="mx-auto min-h-screen max-w-3xl px-4 py-6 md:py-10">
         <Card className="bg-black/40">
@@ -152,18 +193,36 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
         <CardHeader>
           <CardTitle>{mapOnly ? "Team Karte" : "Team Buzzer"}</CardTitle>
           <CardDescription>
-            Team: <span style={{ color: selectedTeam.color }}>{selectedTeam.name}</span>
+            Team:{" "}
+            <span style={{ color: (activeTeam ?? selectedTeam)?.color }}>
+              {(activeTeam ?? selectedTeam)?.name ?? "nicht gewählt"}
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isWoLiegtWas ? (
             <>
+              {mapOnly ? (
+                <div className="flex flex-wrap gap-2">
+                  {orderedTeams.map((team) => (
+                    <Button
+                      key={team.id}
+                      size="sm"
+                      variant={team.id === mapSelectedTeamId ? "default" : "outline"}
+                      onClick={() => setMapSelectedTeamId(team.id)}
+                    >
+                      {team.name}
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
+
               <div className="rounded-xl border border-white/10 bg-black/25 p-3">
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Aktuelle Runde</p>
                 <p className="text-lg font-semibold">Setze deinen Pin auf: {currentLocation.name}</p>
                 {hasSubmitted ? (
                   <p className="text-xs text-emerald-300">
-                    Pin abgegeben. Warte auf Freigabe im Dashboard.
+                    Pin abgegeben.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -183,22 +242,61 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
                   />
                 </div>
 
-                {draftPin ? (
+                {orderedTeams.map((team) => {
+                  const teamGuess = woLiegtWasState.guesses[team.id];
+                  const point = team.id === activeTeam?.id && draftPin && !teamGuess ? draftPin : teamGuess;
+                  if (!point) {
+                    return null;
+                  }
+
+                  return (
+                    <div
+                      key={team.id}
+                      className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+                      style={{
+                        left: `${point.x}%`,
+                        top: `${point.y}%`,
+                        backgroundColor: team.color
+                      }}
+                      title={`Pin ${team.name}`}
+                    />
+                  );
+                })}
+
+                {showLocalResult ? (
                   <div
-                    className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+                    className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-yellow-400"
                     style={{
-                      left: `${draftPin.x}%`,
-                      top: `${draftPin.y}%`,
-                      backgroundColor: selectedTeam.color
+                      left: `${targetPoint.x}%`,
+                      top: `${targetPoint.y}%`
                     }}
-                    title="Dein Pin"
+                    title={`Zielort ${currentLocation.name}`}
                   />
                 ) : null}
               </div>
 
-              <Button onClick={confirmPin} disabled={!draftPin || hasSubmitted}>
+              <Button onClick={confirmPin} disabled={!activeTeam || !draftPin || hasSubmitted}>
                 Pin bestätigen
               </Button>
+
+              <Button variant="outline" onClick={revealOnThisDevice} disabled={!allPinsSet}>
+                Ergebnis anzeigen
+              </Button>
+
+              {showLocalResult ? (
+                <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm">
+                  {orderedTeams.map((team) => (
+                    <p key={team.id} style={{ color: team.color }}>
+                      {team.name}: {localDistances[team.id] ? `${localDistances[team.id].toFixed(2)} Einheiten` : "kein Pin"}
+                    </p>
+                  ))}
+                  <p className="mt-1 font-semibold">
+                    {localWinnerTeamId
+                      ? `Näher dran: ${orderedTeams.find((team) => team.id === localWinnerTeamId)?.name ?? localWinnerTeamId}`
+                      : "Gleichstand"}
+                  </p>
+                </div>
+              ) : null}
             </>
           ) : mapOnly ? (
             <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-muted-foreground">
@@ -206,7 +304,7 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
             </div>
           ) : (
             <BuzzerButton
-              teamColor={selectedTeam.color}
+              teamColor={activeTeam?.color ?? "#ffffff"}
               disabled={snapshot.buzzerState.locked}
               onPress={handleBuzz}
               label="BUZZ"

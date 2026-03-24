@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   WO_LIEGT_WAS_LOCATIONS,
   createInitialWoLiegtWasState,
@@ -32,6 +32,8 @@ export function WoLiegtWasAdminPanel({
   onSetWinner
 }: WoLiegtWasAdminPanelProps) {
   const teamIds = useMemo(() => teams.map((team) => team.id), [teams]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(teamIds[0] ?? "");
+  const [targetingMode, setTargetingMode] = useState(false);
   const state = getWoLiegtWasState(gameState.metadata, teamIds);
   const location = WO_LIEGT_WAS_LOCATIONS[state.locationIndex] ?? WO_LIEGT_WAS_LOCATIONS[0];
 
@@ -123,9 +125,29 @@ export function WoLiegtWasAdminPanel({
           </div>
         </div>
 
+        <div className="flex flex-wrap gap-2">
+          {teams.map((team) => (
+            <Button
+              key={team.id}
+              size="sm"
+              variant={!targetingMode && selectedTeamId === team.id ? "default" : "outline"}
+              onClick={() => setSelectedTeamId(team.id)}
+            >
+              Pin setzen: {team.name}
+            </Button>
+          ))}
+          <Button
+            size="sm"
+            variant={targetingMode ? "default" : "outline"}
+            onClick={() => setTargetingMode((prev) => !prev)}
+          >
+            {targetingMode ? "Zielpunkt-Modus aktiv" : "Zielpunkt kalibrieren"}
+          </Button>
+        </div>
+
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <Button onClick={() => persist({ ...state, reveal: true })} disabled={!allPinsSet}>
-            Ort anzeigen
+            Auf Public freigeben
           </Button>
           <Button variant="outline" onClick={awardPoint} disabled={!winnerTeamId || state.roundAwarded || !state.reveal}>
             Punkt an näheres Team
