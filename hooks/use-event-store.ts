@@ -702,7 +702,7 @@ export const useEventStore = create<EventStore>()(
                 };
               });
               memoryResolveTimeout = null;
-            }, 900);
+            }, 5000);
 
             return {
               memory: {
