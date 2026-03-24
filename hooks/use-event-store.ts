@@ -64,6 +64,7 @@ interface EventStore {
 }
 
 const initialSnapshot = createDemoSnapshot();
+let memoryResolveTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function getMemoryTeamIds(snapshot: EventSnapshot): string[] {
   return snapshot.teams
@@ -594,6 +595,10 @@ export const useEventStore = create<EventStore>()(
       },
 
       initializeMemory: () => {
+        if (memoryResolveTimeout) {
+          clearTimeout(memoryResolveTimeout);
+          memoryResolveTimeout = null;
+        }
         set((state) => ({
           memory: nextMemory(getMemoryTeamIds(state.snapshot))
         }));
@@ -621,61 +626,83 @@ export const useEventStore = create<EventStore>()(
           if (selectedIds.length === 2) {
             const selectedCards = cards.filter((entry) => selectedIds.includes(entry.id));
             const matched = selectedCards[0].pairId === selectedCards[1].pairId;
-
-            const resolvedCards = cards.map((entry) => {
-              if (!selectedIds.includes(entry.id)) {
-                return entry;
-              }
-
-              if (matched) {
+            const teamPairCounts = { ...state.memory.teamPairCounts };
+            if (matched) {
+              const resolvedCards = cards.map((entry) => {
+                if (!selectedIds.includes(entry.id)) {
+                  return entry;
+                }
                 return {
                   ...entry,
                   matched: true,
                   faceUp: true
                 };
+              });
+              const allMatched = resolvedCards.every((entry) => entry.matched);
+
+              if (activeTeamId) {
+                teamPairCounts[activeTeamId] = (teamPairCounts[activeTeamId] ?? 0) + 1;
+              }
+
+              let winnerTeamId: string | null = null;
+              if (allMatched && orderedTeamIds.length > 0) {
+                const [firstTeamId, secondTeamId] = orderedTeamIds;
+                const firstScore = teamPairCounts[firstTeamId] ?? 0;
+                const secondScore = secondTeamId ? (teamPairCounts[secondTeamId] ?? 0) : -1;
+                if (firstScore === secondScore) {
+                  winnerTeamId = null;
+                } else {
+                  winnerTeamId = firstScore > secondScore ? firstTeamId : (secondTeamId ?? firstTeamId);
+                }
               }
 
               return {
-                ...entry,
-                faceUp: false
+                memory: {
+                  ...state.memory,
+                  cards: resolvedCards,
+                  selectedIds: [],
+                  moves: state.memory.moves + 1,
+                  currentTeamId: activeTeamId,
+                  teamPairCounts,
+                  finishedAt: allMatched ? new Date().toISOString() : state.memory.finishedAt,
+                  winnerTeamId
+                }
               };
-            });
-
-            const allMatched = resolvedCards.every((entry) => entry.matched);
-            const teamPairCounts = { ...state.memory.teamPairCounts };
-
-            if (matched && activeTeamId) {
-              teamPairCounts[activeTeamId] = (teamPairCounts[activeTeamId] ?? 0) + 1;
             }
 
-            let nextTeamId = activeTeamId;
-            if (!matched) {
-              const alternativeTeamId = orderedTeamIds.find((teamId) => teamId !== activeTeamId) ?? activeTeamId;
-              nextTeamId = alternativeTeamId ?? null;
+            if (memoryResolveTimeout) {
+              clearTimeout(memoryResolveTimeout);
             }
-
-            let winnerTeamId: string | null = null;
-            if (allMatched && orderedTeamIds.length > 0) {
-              const [firstTeamId, secondTeamId] = orderedTeamIds;
-              const firstScore = teamPairCounts[firstTeamId] ?? 0;
-              const secondScore = secondTeamId ? (teamPairCounts[secondTeamId] ?? 0) : -1;
-              if (firstScore === secondScore) {
-                winnerTeamId = null;
-              } else {
-                winnerTeamId = firstScore > secondScore ? firstTeamId : (secondTeamId ?? firstTeamId);
-              }
-            }
+            memoryResolveTimeout = setTimeout(() => {
+              set((current) => {
+                if (current.memory.selectedIds.length !== 2) {
+                  return current;
+                }
+                const selectedSet = new Set(current.memory.selectedIds);
+                const nextCards = current.memory.cards.map((entry) =>
+                  selectedSet.has(entry.id) && !entry.matched ? { ...entry, faceUp: false } : entry
+                );
+                const turnTeamIds = getMemoryTeamIds(current.snapshot);
+                const currentTeamIdForTurn = current.memory.currentTeamId ?? turnTeamIds[0] ?? null;
+                const nextTeamId = turnTeamIds.find((teamId) => teamId !== currentTeamIdForTurn) ?? currentTeamIdForTurn;
+                return {
+                  memory: {
+                    ...current.memory,
+                    cards: nextCards,
+                    selectedIds: [],
+                    currentTeamId: nextTeamId
+                  }
+                };
+              });
+              memoryResolveTimeout = null;
+            }, 900);
 
             return {
               memory: {
                 ...state.memory,
-                cards: resolvedCards,
-                selectedIds: [],
-                moves: state.memory.moves + 1,
-                currentTeamId: nextTeamId,
-                teamPairCounts,
-                finishedAt: allMatched ? new Date().toISOString() : state.memory.finishedAt,
-                winnerTeamId
+                cards,
+                selectedIds,
+                moves: state.memory.moves + 1
               }
             };
           }
@@ -691,12 +718,20 @@ export const useEventStore = create<EventStore>()(
       },
 
       resetMemory: () => {
+        if (memoryResolveTimeout) {
+          clearTimeout(memoryResolveTimeout);
+          memoryResolveTimeout = null;
+        }
         set((state) => ({
           memory: nextMemory(getMemoryTeamIds(state.snapshot))
         }));
       },
 
       resetAll: () => {
+        if (memoryResolveTimeout) {
+          clearTimeout(memoryResolveTimeout);
+          memoryResolveTimeout = null;
+        }
         const snapshot = recalc(createDemoSnapshot());
         set({
           snapshot,

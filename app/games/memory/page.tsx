@@ -6,10 +6,9 @@ import { useEventStore } from "@/hooks/use-event-store";
 import { MemoryCard } from "@/components/game/memory-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MEMORY_PAIR_COUNT } from "@/config/memory-images";
 
 export default function MemoryPage() {
-  const { memory, flipMemoryCard, initializeMemory, resetMemory } = useEventStore((state) => state);
+  const { memory, flipMemoryCard, resetMemory } = useEventStore((state) => state);
   const allTeams = useEventStore((state) => state.snapshot.teams);
   const teams = useMemo(
     () => allTeams.slice().sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 2),
@@ -33,14 +32,9 @@ export default function MemoryPage() {
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-cyan-300" />Memory Modul
           </CardTitle>
-          <CardDescription>64 Karten (32 Paare). Teams spielen abwechselnd gegeneinander.</CardDescription>
-          <CardDescription>Bilder liegen in `/public/media/memory/` als `01.png` bis `32.png`.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-          <div className="flex items-center rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-muted-foreground">
-            {MEMORY_PAIR_COUNT} Paare fest eingestellt
-          </div>
-          <Button onClick={initializeMemory}>Neues Spiel</Button>
+        <CardContent className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <div />
           <Button variant="outline" onClick={resetMemory}>
             <RotateCcw className="mr-2 h-4 w-4" />Reset
           </Button>
@@ -51,7 +45,7 @@ export default function MemoryPage() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Paare</p>
-            <p className="text-2xl font-semibold">{matchedPairs}/{totalPairs || MEMORY_PAIR_COUNT}</p>
+            <p className="text-2xl font-semibold">{matchedPairs}/{totalPairs || 32}</p>
           </CardContent>
         </Card>
         <Card>
