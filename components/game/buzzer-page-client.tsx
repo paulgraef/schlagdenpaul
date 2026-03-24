@@ -169,6 +169,23 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
     setShowLocalResult(true);
   }
 
+  function goToNextLocation() {
+    if (!isWoLiegtWas) {
+      return;
+    }
+
+    setGameMetadata(gameForView.id, {
+      woLiegtWas: {
+        ...woLiegtWasState,
+        locationIndex: (woLiegtWasState.locationIndex + 1) % WO_LIEGT_WAS_LOCATIONS.length,
+        reveal: false,
+        roundAwarded: false,
+        guesses: Object.fromEntries(orderedTeams.map((team) => [team.id, null]))
+      }
+    });
+    setShowLocalResult(false);
+  }
+
   if (!mapOnly && !selectedTeam) {
     return (
       <main className="mx-auto min-h-screen max-w-3xl px-4 py-6 md:py-10">
@@ -242,26 +259,25 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
                   />
                 </div>
 
-                {orderedTeams.map((team) => {
-                  const teamGuess = woLiegtWasState.guesses[team.id];
-                  const point = team.id === activeTeam?.id && draftPin && !teamGuess ? draftPin : teamGuess;
-                  if (!point) {
+                {(() => {
+                  const activeTeamGuess = activeTeam ? woLiegtWasState.guesses[activeTeam.id] : null;
+                  const point = activeTeam && draftPin && !activeTeamGuess ? draftPin : activeTeamGuess;
+                  if (!point || !activeTeam) {
                     return null;
                   }
 
                   return (
                     <div
-                      key={team.id}
                       className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
                       style={{
                         left: `${point.x}%`,
                         top: `${point.y}%`,
-                        backgroundColor: team.color
+                        backgroundColor: activeTeam.color
                       }}
-                      title={`Pin ${team.name}`}
+                      title={`Pin ${activeTeam.name}`}
                     />
                   );
-                })}
+                })()}
 
                 {showLocalResult ? (
                   <div
@@ -281,6 +297,10 @@ export function BuzzerPageClient({ mapOnly = false }: BuzzerPageClientProps) {
 
               <Button variant="outline" onClick={revealOnThisDevice} disabled={!allPinsSet}>
                 Ergebnis anzeigen
+              </Button>
+
+              <Button variant="outline" onClick={goToNextLocation}>
+                Nächster Ort
               </Button>
 
               {showLocalResult ? (
