@@ -152,6 +152,8 @@ function normalizeMemoryRuntime(input: unknown, snapshot: EventSnapshot): Memory
 
 function recalc(snapshot: EventSnapshot): EventSnapshot {
   const gameLayoutByNumber: Record<number, { title: string; slug: string }> = {
+    2: { title: "Golf", slug: "golf" },
+    6: { title: "Spaghetti", slug: "spaghetti" },
     9: { title: "Geoguesser", slug: "geoguesser" },
     10: { title: "Memory", slug: "memory" },
     11: { title: "Wettessen", slug: "wettessen" },

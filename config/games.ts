@@ -1,10 +1,10 @@
 export const GAME_TITLES: string[] = [
   "Länderumrisse",
-  "Spaghetti",
+  "Golf",
   "Blamieren oder Kassieren",
   "Wo liegt was?",
   "Flaggen",
-  "Golf",
+  "Spaghetti",
   "Wer lügt?",
   "Biathlon",
   "Geoguesser",
