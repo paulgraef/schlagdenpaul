@@ -85,6 +85,52 @@ function nextMemory(teamIds: string[] = []): MemoryRuntime {
   };
 }
 
+function normalizeMemoryRuntime(input: unknown, snapshot: EventSnapshot): MemoryRuntime {
+  const fallback = nextMemory(getMemoryTeamIds(snapshot));
+  if (!input || typeof input !== "object") {
+    return fallback;
+  }
+
+  const raw = input as Partial<MemoryRuntime>;
+  const cards =
+    Array.isArray(raw.cards) && raw.cards.length
+      ? raw.cards
+      : fallback.cards;
+
+  const selectedIds = Array.isArray(raw.selectedIds)
+    ? raw.selectedIds.filter((value): value is string => typeof value === "string").slice(0, 2)
+    : [];
+
+  const moves = typeof raw.moves === "number" && Number.isFinite(raw.moves) ? raw.moves : 0;
+  const finishedAt = typeof raw.finishedAt === "string" ? raw.finishedAt : null;
+  const winnerTeamId = typeof raw.winnerTeamId === "string" ? raw.winnerTeamId : null;
+
+  const teamIds = getMemoryTeamIds(snapshot);
+  const rawTeamPairCounts = (raw.teamPairCounts ?? {}) as Record<string, unknown>;
+  const teamPairCounts = Object.fromEntries(
+    teamIds.map((teamId) => {
+      const value = rawTeamPairCounts[teamId];
+      const count = typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+      return [teamId, count];
+    })
+  );
+
+  const currentTeamId =
+    typeof raw.currentTeamId === "string" && teamIds.includes(raw.currentTeamId)
+      ? raw.currentTeamId
+      : (teamIds[0] ?? null);
+
+  return {
+    cards,
+    selectedIds,
+    moves,
+    currentTeamId,
+    teamPairCounts,
+    finishedAt,
+    winnerTeamId
+  };
+}
+
 function recalc(snapshot: EventSnapshot): EventSnapshot {
   return {
     ...snapshot,
@@ -697,6 +743,28 @@ export const useEventStore = create<EventStore>()(
     {
       name: "sdp-event-store",
       storage: createJSONStorage(() => localStorage),
+      version: 2,
+      migrate: (persistedState) => {
+        const raw = persistedState as Partial<EventStore> | undefined;
+        const snapshot = raw?.snapshot ? recalc(raw.snapshot) : recalc(initialSnapshot);
+        return {
+          ...raw,
+          snapshot,
+          eventSlug: raw?.eventSlug ?? snapshot.event.slug,
+          memory: normalizeMemoryRuntime(raw?.memory, snapshot)
+        } as EventStore;
+      },
+      merge: (persistedState, currentState) => {
+        const raw = persistedState as Partial<EventStore> | undefined;
+        const snapshot = raw?.snapshot ? recalc(raw.snapshot) : currentState.snapshot;
+        return {
+          ...currentState,
+          ...raw,
+          snapshot,
+          eventSlug: raw?.eventSlug ?? snapshot.event.slug,
+          memory: normalizeMemoryRuntime(raw?.memory, snapshot)
+        };
+      },
       partialize: (state) => ({
         snapshot: state.snapshot,
         eventSlug: state.eventSlug,
