@@ -22,7 +22,8 @@ export function createMemoryBoard(imageSources: string[] = MEMORY_IMAGE_SOURCES)
       label,
       icon: source,
       matched: false,
-      faceUp: false
+      faceUp: false,
+      matchedByTeamId: null
     };
 
     const cardB: MemoryCardModel = {
@@ -31,7 +32,8 @@ export function createMemoryBoard(imageSources: string[] = MEMORY_IMAGE_SOURCES)
       label,
       icon: source,
       matched: false,
-      faceUp: false
+      faceUp: false,
+      matchedByTeamId: null
     };
 
     return [cardA, cardB];
@@ -67,7 +69,8 @@ export function resolveMemoryTurn(
       return {
         ...card,
         matched: true,
-        faceUp: true
+        faceUp: true,
+        matchedByTeamId: null
       };
     }
 

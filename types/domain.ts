@@ -163,4 +163,5 @@ export interface MemoryCardModel {
   icon: string;
   matched: boolean;
   faceUp: boolean;
+  matchedByTeamId: string | null;
 }

@@ -106,11 +106,15 @@ function normalizeMemoryRuntime(input: unknown, snapshot: EventSnapshot): Memory
           typeof entry.icon === "string" &&
           entry.icon.startsWith("/media/memory/") &&
           typeof entry.matched === "boolean" &&
-          typeof entry.faceUp === "boolean"
+          typeof entry.faceUp === "boolean" &&
+          (typeof entry.matchedByTeamId === "string" || entry.matchedByTeamId === null || typeof entry.matchedByTeamId === "undefined")
         );
       })
     : [];
-  const safeCards = cards.length ? cards : fallback.cards;
+  const safeCards = (cards.length ? cards : fallback.cards).map((card) => ({
+    ...card,
+    matchedByTeamId: typeof card.matchedByTeamId === "string" ? card.matchedByTeamId : null
+  }));
 
   const selectedIds = Array.isArray(raw.selectedIds)
     ? raw.selectedIds.filter((value): value is string => typeof value === "string").slice(0, 2)
@@ -635,7 +639,8 @@ export const useEventStore = create<EventStore>()(
                 return {
                   ...entry,
                   matched: true,
-                  faceUp: true
+                  faceUp: true,
+                  matchedByTeamId: activeTeamId
                 };
               });
               const allMatched = resolvedCards.every((entry) => entry.matched);

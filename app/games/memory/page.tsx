@@ -5,7 +5,7 @@ import { Brain, RotateCcw } from "lucide-react";
 import { useEventStore } from "@/hooks/use-event-store";
 import { MemoryCard } from "@/components/game/memory-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function MemoryPage() {
   const { memory, flipMemoryCard, resetMemory } = useEventStore((state) => state);
@@ -24,67 +24,77 @@ export default function MemoryPage() {
   const finished = totalPairs > 0 && matchedPairs === totalPairs;
   const currentTeam = teams.find((team) => team.id === memory.currentTeamId) ?? null;
   const winnerTeam = teams.find((team) => team.id === memory.winnerTeamId) ?? null;
+  const teamColorById = useMemo(
+    () => Object.fromEntries(teams.map((team) => [team.id, team.color])),
+    [teams]
+  );
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-6 md:px-8 md:py-10">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-cyan-300" />Memory Modul
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-[1fr_auto]">
-          <div />
-          <Button variant="outline" onClick={resetMemory}>
-            <RotateCcw className="mr-2 h-4 w-4" />Reset
-          </Button>
-        </CardContent>
-      </Card>
+    <main className="h-[100dvh] overflow-hidden p-2 md:p-3">
+      <div className="grid h-full min-h-0 grid-cols-[176px_1fr] gap-2 md:grid-cols-[260px_1fr]">
+        <aside className="min-h-0">
+          <Card className="h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                <Brain className="h-5 w-5 text-cyan-300" />
+                Memory
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-0">
+              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Paare</p>
+                <p className="text-xl font-semibold">{matchedPairs}/{totalPairs || 32}</p>
+              </div>
 
-      <section className="mb-4 grid gap-3 sm:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Paare</p>
-            <p className="text-2xl font-semibold">{matchedPairs}/{totalPairs || 32}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Am Zug</p>
-            <p className="text-xl font-semibold" style={{ color: currentTeam?.color }}>
-              {currentTeam?.name ?? "—"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{teams[0]?.name ?? "Team 1"}</p>
-            <p className="text-2xl font-semibold" style={{ color: teams[0]?.color }}>
-              {memory.teamPairCounts[teams[0]?.id ?? ""] ?? 0}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{teams[1]?.name ?? "Team 2"}</p>
-            <p className="text-2xl font-semibold" style={{ color: teams[1]?.color }}>
-              {memory.teamPairCounts[teams[1]?.id ?? ""] ?? 0}
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Am Zug</p>
+                <p className="text-lg font-semibold" style={{ color: currentTeam?.color }}>
+                  {currentTeam?.name ?? "—"}
+                </p>
+              </div>
 
-      {finished ? (
-        <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-100">
-          {winnerTeam ? `Gewinner: ${winnerTeam.name}` : "Unentschieden"} - alle Paare gefunden.
-        </div>
-      ) : null}
+              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{teams[0]?.name ?? "Team 1"}</p>
+                <p className="text-xl font-semibold" style={{ color: teams[0]?.color }}>
+                  {memory.teamPairCounts[teams[0]?.id ?? ""] ?? 0}
+                </p>
+              </div>
 
-      <section className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
-        {memory.cards.map((card) => (
-          <MemoryCard key={card.id} card={card} onClick={flipMemoryCard} />
-        ))}
-      </section>
+              <div className="rounded-lg border border-white/10 bg-black/20 p-2">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{teams[1]?.name ?? "Team 2"}</p>
+                <p className="text-xl font-semibold" style={{ color: teams[1]?.color }}>
+                  {memory.teamPairCounts[teams[1]?.id ?? ""] ?? 0}
+                </p>
+              </div>
+
+              {finished ? (
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2 text-sm text-emerald-100">
+                  {winnerTeam ? `Gewinner: ${winnerTeam.name}` : "Unentschieden"}
+                </div>
+              ) : null}
+
+              <Button variant="outline" className="w-full" onClick={resetMemory}>
+                <RotateCcw className="mr-2 h-4 w-4" />Reset
+              </Button>
+            </CardContent>
+          </Card>
+        </aside>
+
+        <section className="min-h-0 overflow-hidden">
+          <div className="mx-auto h-full w-full max-w-[min(92dvh,1100px)]">
+            <div className="grid h-full grid-cols-8 gap-1 md:gap-1.5">
+              {memory.cards.map((card) => (
+                <MemoryCard
+                  key={card.id}
+                  card={card}
+                  onClick={flipMemoryCard}
+                  matchedBorderColor={card.matchedByTeamId ? teamColorById[card.matchedByTeamId] : undefined}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
