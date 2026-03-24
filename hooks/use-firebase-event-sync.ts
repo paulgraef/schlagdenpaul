@@ -21,9 +21,10 @@ export function useFirebaseEventSync(eventSlug: string) {
   const skipNextSaveRef = useRef(false);
   const lastSavedHashRef = useRef<string | null>(null);
   const [remoteReady, setRemoteReady] = useState(false);
+  const [syncDisabled, setSyncDisabled] = useState(false);
 
   useEffect(() => {
-    if (!hasPublicFirebaseEnv()) {
+    if (!hasPublicFirebaseEnv() || syncDisabled) {
       return;
     }
 
@@ -59,13 +60,14 @@ export function useFirebaseEventSync(eventSlug: string) {
         setRemoteReady(true);
       },
       () => {
+        setSyncDisabled(true);
         setRemoteReady(true);
       }
     );
-  }, [eventSlug, replaceSnapshot]);
+  }, [eventSlug, replaceSnapshot, syncDisabled]);
 
   useEffect(() => {
-    if (!remoteReady || !hasPublicFirebaseEnv()) {
+    if (!remoteReady || !hasPublicFirebaseEnv() || syncDisabled) {
       return;
     }
 
@@ -95,11 +97,13 @@ export function useFirebaseEventSync(eventSlug: string) {
           updatedAt: serverTimestamp()
         },
         { merge: true }
-      );
+      ).catch(() => {
+        setSyncDisabled(true);
+      });
     }, 120);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [eventSlug, remoteReady, snapshot]);
+  }, [eventSlug, remoteReady, snapshot, syncDisabled]);
 }

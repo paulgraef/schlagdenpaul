@@ -92,10 +92,24 @@ function normalizeMemoryRuntime(input: unknown, snapshot: EventSnapshot): Memory
   }
 
   const raw = input as Partial<MemoryRuntime>;
-  const cards =
-    Array.isArray(raw.cards) && raw.cards.length
-      ? raw.cards
-      : fallback.cards;
+  const cards = Array.isArray(raw.cards)
+    ? raw.cards.filter((card): card is MemoryCardModel => {
+        if (!card || typeof card !== "object") {
+          return false;
+        }
+        const entry = card as Partial<MemoryCardModel>;
+        return (
+          typeof entry.id === "string" &&
+          typeof entry.pairId === "string" &&
+          typeof entry.label === "string" &&
+          typeof entry.icon === "string" &&
+          entry.icon.startsWith("/media/memory/") &&
+          typeof entry.matched === "boolean" &&
+          typeof entry.faceUp === "boolean"
+        );
+      })
+    : [];
+  const safeCards = cards.length ? cards : fallback.cards;
 
   const selectedIds = Array.isArray(raw.selectedIds)
     ? raw.selectedIds.filter((value): value is string => typeof value === "string").slice(0, 2)
@@ -121,7 +135,7 @@ function normalizeMemoryRuntime(input: unknown, snapshot: EventSnapshot): Memory
       : (teamIds[0] ?? null);
 
   return {
-    cards,
+    cards: safeCards,
     selectedIds,
     moves,
     currentTeamId,
