@@ -72,7 +72,7 @@ export function PublicStage({ gameTitle, gameType, item, reveal, animationKey = 
               animate={{ opacity: 1 }}
               className="flex h-[420px] items-center justify-center rounded-2xl border border-dashed border-white/15 text-muted-foreground md:h-[560px]"
             >
-              Medien werden gleich eingeblendet
+              {helperText ?? "Medien werden gleich eingeblendet"}
             </motion.div>
           )}
         </AnimatePresence>

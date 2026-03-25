@@ -9,17 +9,32 @@ import { WoLiegtWasStage } from "@/components/public/wo-liegt-was-stage";
 export default function PublicCurrentPage() {
   const snapshot = useEventStore((state) => state.snapshot);
 
-  const currentGame = useMemo(
-    () => snapshot.games.find((game) => game.id === snapshot.mediaControl.gameId) ?? snapshot.games.find((game) => game.status === "active") ?? snapshot.games[0],
+  const activeGame = useMemo(
+    () => snapshot.games.find((game) => game.status === "active") ?? snapshot.games[0],
+    [snapshot.games]
+  );
+  const controlledGame = useMemo(
+    () => snapshot.games.find((game) => game.id === snapshot.mediaControl.gameId) ?? null,
     [snapshot.games, snapshot.mediaControl.gameId]
   );
 
-  const items = snapshot.mediaItems
-    .filter((item) => item.gameId === currentGame?.id)
-    .slice()
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  function mediaItemsForGame(gameId?: string | null) {
+    if (!gameId) {
+      return [];
+    }
+    return snapshot.mediaItems
+      .filter((item) => item.gameId === gameId)
+      .slice()
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }
 
-  const currentItem = items[snapshot.mediaControl.currentIndex];
+  const controlledItems = mediaItemsForGame(controlledGame?.id);
+  const activeItems = mediaItemsForGame(activeGame?.id);
+  const currentGame = controlledGame && controlledItems.length > 0 ? controlledGame : activeGame;
+  const items = currentGame?.id === controlledGame?.id ? controlledItems : activeItems;
+
+  const safeIndex = Math.min(snapshot.mediaControl.currentIndex, Math.max(items.length - 1, 0));
+  const currentItem = items[safeIndex];
   const winnerTeam = snapshot.teams.find((team) => team.id === snapshot.buzzerState.winnerTeamId);
 
 
@@ -41,6 +56,7 @@ export default function PublicCurrentPage() {
             item={currentItem}
             reveal={snapshot.mediaControl.reveal}
             animationKey={snapshot.mediaControl.animationKey ?? 0}
+            helperText={items.length === 0 ? "Für dieses Spiel sind keine Medien hinterlegt." : undefined}
           />
         )}
 
