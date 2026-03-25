@@ -134,6 +134,20 @@ export default function SortierenPage() {
     });
   }
 
+  function resetCurrentRound() {
+    const randomStarter = round.items[Math.floor(Math.random() * round.items.length)];
+    const shuffledPool = shuffleStrings(round.items.filter((item) => item !== randomStarter));
+    persist({
+      placements: [randomStarter],
+      selectedItem: null,
+      starterItem: randomStarter,
+      poolOrder: shuffledPool,
+      roundResolved: false,
+      roundCorrect: null,
+      revealSolution: false
+    });
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-4 md:p-6">
       <Card className="mb-4 border-white/10 bg-black/40">
@@ -160,30 +174,33 @@ export default function SortierenPage() {
         <Card className="border-white/10 bg-black/40">
           <CardContent className="p-4">
             <div className="mb-2 text-center text-sm font-semibold text-muted-foreground">{round.upperLabel}</div>
-            <div className="grid grid-cols-[1fr_46px] gap-2">
-              <div className="space-y-2">
-                {placements.map((item, index) => {
-                  const correct = item === order[index];
-                  return (
-                    <button
-                      key={`${item}-${index}`}
-                      className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
-                        correct
-                          ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
-                          : "border-red-400/70 bg-red-500/10 text-red-100"
-                      }`}
-                      onClick={() => removeAt(index)}
-                      disabled={state.roundResolved || item === starterItem}
-                    >
-                      {item}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="space-y-2">
-                {placementButtons.map((position) => (
+            <div className="space-y-2">
+              {placementButtons.map((position) => (
+                <div key={`slot-row-${position}`} className="grid grid-cols-[1fr_46px] items-center gap-2">
+                  <div>
+                    {position < placements.length ? (
+                      (() => {
+                        const item = placements[position];
+                        const correct = item === order[position];
+                        return (
+                          <button
+                            className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
+                              correct
+                                ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
+                                : "border-red-400/70 bg-red-500/10 text-red-100"
+                            }`}
+                            onClick={() => removeAt(position)}
+                            disabled={state.roundResolved || item === starterItem}
+                          >
+                            {item}
+                          </button>
+                        );
+                      })()
+                    ) : (
+                      <div className="h-[44px]" />
+                    )}
+                  </div>
                   <button
-                    key={`slot-arrow-${position}`}
                     className="h-[44px] w-[44px] p-0 disabled:cursor-not-allowed disabled:opacity-45"
                     disabled={!state.selectedItem || state.roundResolved}
                     onClick={() => insertAt(position)}
@@ -209,8 +226,8 @@ export default function SortierenPage() {
                       </text>
                     </svg>
                   </button>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
             <div className="mt-2 text-center text-sm font-semibold text-muted-foreground">{round.lowerLabel}</div>
           </CardContent>
@@ -237,6 +254,9 @@ export default function SortierenPage() {
             ))}
 
             <div className="grid grid-cols-1 gap-2 pt-2">
+              <Button variant="outline" onClick={resetCurrentRound}>
+                Zurücksetzen
+              </Button>
               <Button variant="outline" onClick={revealSolution} disabled={!state.roundResolved}>
                 Richtige Reihenfolge aufdecken
               </Button>
