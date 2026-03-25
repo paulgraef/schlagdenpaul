@@ -24,10 +24,7 @@ export default function SortierenPage() {
 
   const starterValid = Boolean(state.starterItem && round.items.includes(state.starterItem));
   const starterItem = starterValid ? state.starterItem : null;
-  const placements = starterItem
-    ? (state.placements.length ? state.placements : [starterItem])
-    : [];
-
+  const placements = starterItem ? (state.placements.length ? state.placements : [starterItem]) : [];
   const currentTeamId = teamIds[state.roundIndex % Math.max(teamIds.length, 1)] ?? null;
   const currentTeam = teams.find((team) => team.id === currentTeamId) ?? null;
   const remaining = round.items.filter((item) => !placements.includes(item));
@@ -44,10 +41,7 @@ export default function SortierenPage() {
   }
 
   useEffect(() => {
-    if (!game) {
-      return;
-    }
-    if (starterValid) {
+    if (!game || starterValid) {
       return;
     }
     const randomStarter = round.items[Math.floor(Math.random() * round.items.length)];
@@ -240,10 +234,7 @@ export default function SortierenPage() {
               <Button variant="outline" onClick={revealSolution}>
                 Richtige Reihenfolge aufdecken
               </Button>
-              <Button
-                variant="outline"
-                onClick={nextRound}
-              >
+              <Button variant="outline" onClick={nextRound}>
                 Nächste Runde
               </Button>
             </div>

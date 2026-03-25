@@ -53,7 +53,7 @@ export function getSortierenState(metadata: Record<string, unknown>, teamIds: st
   const overridesRaw = asRecord(raw.overrides);
   const overrides = Object.fromEntries(
     Object.entries(overridesRaw).map(([roundId, value]) => {
-      const list = Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string").slice(0, 8) : [];
+      const list = Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string").slice(0, 20) : [];
       return [roundId, list];
     })
   ) as Record<string, string[]>;
