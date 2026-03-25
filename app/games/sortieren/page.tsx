@@ -79,15 +79,10 @@ export default function SortierenPage() {
     next.splice(position, 0, state.selectedItem);
     const complete = next.length === round.items.length;
     const allCorrect = complete ? next.every((item, index) => item === order[index]) : false;
-    const nextPoints = { ...state.points };
-    if (complete && allCorrect && currentTeamId) {
-      nextPoints[currentTeamId] = (nextPoints[currentTeamId] ?? 0) + 1;
-    }
 
     persist({
       placements: next,
       selectedItem: null,
-      points: nextPoints,
       roundResolved: complete,
       roundCorrect: complete ? allCorrect : null,
       revealSolution: false
@@ -136,6 +131,17 @@ export default function SortierenPage() {
       roundResolved: false,
       roundCorrect: null,
       revealSolution: false
+    });
+  }
+
+  function updateTeamPoints(teamId: string, delta: number) {
+    const current = state.points[teamId] ?? 0;
+    const next = Math.max(0, current + delta);
+    persist({
+      points: {
+        ...state.points,
+        [teamId]: next
+      }
     });
   }
 
@@ -197,10 +203,25 @@ export default function SortierenPage() {
                 <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">
                   Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong>
                 </span>
+              </div>
+              <div className="space-y-2">
                 {teams.map((team) => (
-                  <span key={team.id} className="rounded border border-white/10 px-2 py-1 text-sm" style={{ color: team.color }}>
-                    {team.name}: {state.points[team.id] ?? 0}
-                  </span>
+                  <div
+                    key={team.id}
+                    className="flex items-center justify-between rounded border border-white/10 px-2 py-1"
+                  >
+                    <span className="text-sm" style={{ color: team.color }}>
+                      {team.name}: {state.points[team.id] ?? 0}
+                    </span>
+                    <div className="flex gap-1">
+                      <Button variant="outline" className="h-8 w-8 p-0" onClick={() => updateTeamPoints(team.id, -1)}>
+                        -
+                      </Button>
+                      <Button variant="outline" className="h-8 w-8 p-0" onClick={() => updateTeamPoints(team.id, 1)}>
+                        +
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </CardContent>
