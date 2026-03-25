@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { ChevronRight } from "lucide-react";
 import { SORTIEREN_ROUNDS } from "@/config/sortieren-rounds";
 import { useEventStore } from "@/hooks/use-event-store";
 import { getSortierenRoundOrder, getSortierenState, shuffleStrings } from "@/lib/game-engine/sortieren";
@@ -139,17 +138,15 @@ export default function SortierenPage() {
     <main className="mx-auto min-h-screen max-w-6xl p-4 md:p-6">
       <Card className="mb-4 border-white/10 bg-black/40">
         <CardHeader>
-          <CardTitle>Sortieren - Runde {state.roundIndex + 1} / {SORTIEREN_ROUNDS.length}</CardTitle>
+          <CardTitle>
+            Sortieren - Runde {state.roundIndex + 1} / {SORTIEREN_ROUNDS.length}: {round.category}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2 text-sm">
-            <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">Kategorie: {round.category}</span>
             <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">
               Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong>
             </span>
-            <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">{round.upperLabel} {"->"} {round.lowerLabel}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
             {teams.map((team) => (
               <span key={team.id} className="rounded border border-white/10 px-2 py-1 text-sm" style={{ color: team.color }}>
                 {team.name}: {state.points[team.id] ?? 0}
@@ -185,15 +182,15 @@ export default function SortierenPage() {
               </div>
               <div className="space-y-2">
                 {placementButtons.map((position) => (
-                  <Button
+                  <button
                     key={`slot-arrow-${position}`}
-                    className="h-[44px] w-[44px] p-0"
-                    variant="outline"
+                    className="relative h-[44px] w-[44px] border border-white/20 bg-slate-900/70 text-sm font-bold text-slate-100 transition hover:border-cyan-300/50 disabled:cursor-not-allowed disabled:opacity-45"
+                    style={{ clipPath: "polygon(8% 50%, 72% 6%, 72% 30%, 96% 30%, 96% 70%, 72% 70%, 72% 94%)" }}
                     disabled={!state.selectedItem || state.roundResolved}
                     onClick={() => insertAt(position)}
                   >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
+                    {position + 1}
+                  </button>
                 ))}
               </div>
             </div>
