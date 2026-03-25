@@ -172,39 +172,42 @@ export default function SortierenPage() {
         <Card className="border-white/10 bg-black/40">
           <CardContent className="p-4">
             <div className="mb-2 text-center text-sm font-semibold text-muted-foreground">{round.upperLabel}</div>
-            <div className="grid grid-cols-[1fr_46px] gap-2">
-              <div className="space-y-2">
-                {placements.map((item, index) => {
-                  const correct = item === order[index];
-                  return (
-                    <button
-                      key={`${item}-${index}`}
-                      className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
-                        correct
-                          ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
-                          : "border-red-400/70 bg-red-500/10 text-red-100"
-                      }`}
-                      onClick={() => removeAt(index)}
-                      disabled={state.roundResolved || item === starterItem}
+            <div className="space-y-2">
+              {placementButtons.map((position) => {
+                const item = placements[position];
+                const hasItem = typeof item === "string";
+                const correct = hasItem ? item === order[position] : false;
+
+                return (
+                  <div key={`slot-row-${position}`} className="grid grid-cols-[1fr_46px] items-center gap-2">
+                    <div>
+                      {hasItem ? (
+                        <button
+                          className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
+                            correct
+                              ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
+                              : "border-red-400/70 bg-red-500/10 text-red-100"
+                          }`}
+                          onClick={() => removeAt(position)}
+                          disabled={state.roundResolved || item === starterItem}
+                        >
+                          {item}
+                        </button>
+                      ) : (
+                        <div className="h-[44px]" />
+                      )}
+                    </div>
+                    <Button
+                      className="h-[44px] w-[44px] p-0"
+                      variant="outline"
+                      disabled={!state.selectedItem || state.roundResolved}
+                      onClick={() => insertAt(position)}
                     >
-                      {item}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="space-y-2">
-                {placementButtons.map((position) => (
-                  <Button
-                    key={`slot-arrow-${position}`}
-                    className="h-[44px] w-[44px] p-0"
-                    variant="outline"
-                    disabled={!state.selectedItem || state.roundResolved}
-                    onClick={() => insertAt(position)}
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                ))}
-              </div>
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-2 text-center text-sm font-semibold text-muted-foreground">{round.lowerLabel}</div>
           </CardContent>
