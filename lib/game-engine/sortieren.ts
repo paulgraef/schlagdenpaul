@@ -4,6 +4,8 @@ export interface SortierenState {
   roundIndex: number;
   placements: string[];
   selectedItem: string | null;
+  starterItem: string | null;
+  poolOrder: string[];
   roundResolved: boolean;
   roundCorrect: boolean | null;
   revealSolution: boolean;
@@ -36,10 +38,14 @@ export function getSortierenState(metadata: Record<string, unknown>, teamIds: st
       : 0;
 
   const placements = Array.isArray(raw.placements)
-    ? raw.placements.filter((entry): entry is string => typeof entry === "string").slice(0, 8)
+    ? raw.placements.filter((entry): entry is string => typeof entry === "string").slice(0, 20)
     : [];
 
   const selectedItem = typeof raw.selectedItem === "string" ? raw.selectedItem : null;
+  const starterItem = typeof raw.starterItem === "string" ? raw.starterItem : null;
+  const poolOrder = Array.isArray(raw.poolOrder)
+    ? raw.poolOrder.filter((entry): entry is string => typeof entry === "string").slice(0, 20)
+    : [];
   const roundResolved = Boolean(raw.roundResolved);
   const roundCorrect = typeof raw.roundCorrect === "boolean" ? raw.roundCorrect : null;
   const revealSolution = Boolean(raw.revealSolution);
@@ -56,6 +62,8 @@ export function getSortierenState(metadata: Record<string, unknown>, teamIds: st
     roundIndex,
     placements,
     selectedItem,
+    starterItem,
+    poolOrder,
     roundResolved,
     roundCorrect,
     revealSolution,
@@ -80,4 +88,13 @@ export function getSortierenRoundOrder(roundId: string, overrides: Record<string
     round.correctOrder.every((entry) => override.includes(entry));
 
   return sameSet ? override : round.correctOrder;
+}
+
+export function shuffleStrings(input: string[]): string[] {
+  const next = [...input];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [next[index], next[randomIndex]] = [next[randomIndex], next[index]];
+  }
+  return next;
 }

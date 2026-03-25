@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { ChevronRight } from "lucide-react";
 import { SORTIEREN_ROUNDS } from "@/config/sortieren-rounds";
 import { useEventStore } from "@/hooks/use-event-store";
-import { getSortierenRoundOrder, getSortierenState } from "@/lib/game-engine/sortieren";
+import { getSortierenRoundOrder, getSortierenState, shuffleStrings } from "@/lib/game-engine/sortieren";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -14,21 +15,23 @@ export default function SortierenPage() {
     () => snapshot.teams.slice().sort((a, b) => a.sortOrder - b.sortOrder).slice(0, 2),
     [snapshot.teams]
   );
-
-  if (!game) {
-    return <main className="p-6">Sortieren-Spiel nicht gefunden.</main>;
-  }
-
-  const gameId = game.id;
-  const gameState = snapshot.gameStates[gameId];
+  const gameId = game?.id ?? "";
+  const gameState = game ? snapshot.gameStates[gameId] : undefined;
   const teamIds = teams.map((team) => team.id);
   const state = getSortierenState(gameState?.metadata ?? {}, teamIds);
   const round = SORTIEREN_ROUNDS[state.roundIndex] ?? SORTIEREN_ROUNDS[0];
   const order = getSortierenRoundOrder(round.id, state.overrides);
-  const placements = state.placements.length ? state.placements : [round.fixedItem];
+
+  const starterValid = Boolean(state.starterItem && round.items.includes(state.starterItem));
+  const starterItem = starterValid ? state.starterItem : null;
+  const placements = starterItem
+    ? (state.placements.length ? state.placements : [starterItem])
+    : [];
+
   const currentTeamId = teamIds[state.roundIndex % Math.max(teamIds.length, 1)] ?? null;
   const currentTeam = teams.find((team) => team.id === currentTeamId) ?? null;
   const remaining = round.items.filter((item) => !placements.includes(item));
+  const pool = (state.poolOrder.length ? state.poolOrder : remaining).filter((item) => remaining.includes(item));
   const placementButtons = Array.from({ length: placements.length + 1 }, (_, index) => index);
 
   function persist(next: Partial<typeof state>) {
@@ -38,6 +41,33 @@ export default function SortierenPage() {
         ...next
       }
     });
+  }
+
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+    if (starterValid) {
+      return;
+    }
+    const randomStarter = round.items[Math.floor(Math.random() * round.items.length)];
+    const shuffledPool = shuffleStrings(round.items.filter((item) => item !== randomStarter));
+    setGameMetadata(gameId, {
+      sortieren: {
+        ...state,
+        starterItem: randomStarter,
+        placements: [randomStarter],
+        poolOrder: shuffledPool,
+        selectedItem: null,
+        roundResolved: false,
+        roundCorrect: null,
+        revealSolution: false
+      }
+    });
+  }, [game, gameId, round.items, setGameMetadata, starterValid, state]);
+
+  if (!game) {
+    return <main className="p-6">Sortieren-Spiel nicht gefunden.</main>;
   }
 
   function selectItem(item: string) {
@@ -51,34 +81,35 @@ export default function SortierenPage() {
     if (!state.selectedItem || state.roundResolved) {
       return;
     }
+
     const next = [...placements];
     next.splice(position, 0, state.selectedItem);
-    persist({ placements: next, selectedItem: null });
-  }
-
-  function removeAt(index: number) {
-    if (state.roundResolved || placements[index] === round.fixedItem) {
-      return;
-    }
-    const next = placements.filter((_, position) => position !== index);
-    persist({ placements: next });
-  }
-
-  function evaluateRound() {
-    if (placements.length !== round.items.length || state.roundResolved) {
-      return;
-    }
-
-    const correct = placements.every((item, index) => item === order[index]);
+    const complete = next.length === round.items.length;
+    const allCorrect = complete ? next.every((item, index) => item === order[index]) : false;
     const nextPoints = { ...state.points };
-    if (correct && currentTeamId) {
+    if (complete && allCorrect && currentTeamId) {
       nextPoints[currentTeamId] = (nextPoints[currentTeamId] ?? 0) + 1;
     }
 
     persist({
+      placements: next,
+      selectedItem: null,
       points: nextPoints,
-      roundResolved: true,
-      roundCorrect: correct,
+      roundResolved: complete,
+      roundCorrect: complete ? allCorrect : null,
+      revealSolution: false
+    });
+  }
+
+  function removeAt(index: number) {
+    if (state.roundResolved || placements[index] === starterItem) {
+      return;
+    }
+    const next = placements.filter((_, position) => position !== index);
+    persist({
+      placements: next,
+      roundResolved: false,
+      roundCorrect: null,
       revealSolution: false
     });
   }
@@ -92,11 +123,12 @@ export default function SortierenPage() {
 
   function nextRound() {
     const nextRoundIndex = Math.min(state.roundIndex + 1, SORTIEREN_ROUNDS.length - 1);
-    const nextRound = SORTIEREN_ROUNDS[nextRoundIndex] ?? SORTIEREN_ROUNDS[0];
     persist({
       roundIndex: nextRoundIndex,
-      placements: [nextRound.fixedItem],
+      placements: [],
       selectedItem: null,
+      starterItem: null,
+      poolOrder: [],
       roundResolved: false,
       roundCorrect: null,
       revealSolution: false
@@ -131,28 +163,39 @@ export default function SortierenPage() {
         <Card className="border-white/10 bg-black/40">
           <CardContent className="p-4">
             <div className="mb-2 text-center text-sm font-semibold text-muted-foreground">{round.upperLabel}</div>
-            <div className="space-y-2">
-              {placementButtons.map((position) => (
-                <div key={`slot-${position}`} className="space-y-2">
+            <div className="grid grid-cols-[1fr_46px] gap-2">
+              <div className="space-y-2">
+                {placements.map((item, index) => {
+                  const correct = item === order[index];
+                  return (
+                    <button
+                      key={`${item}-${index}`}
+                      className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
+                        correct
+                          ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
+                          : "border-red-400/70 bg-red-500/10 text-red-100"
+                      }`}
+                      onClick={() => removeAt(index)}
+                      disabled={state.roundResolved || item === starterItem}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="space-y-2">
+                {placementButtons.map((position) => (
                   <Button
-                    className="w-full"
+                    key={`slot-arrow-${position}`}
+                    className="h-[44px] w-[44px] p-0"
                     variant="outline"
                     disabled={!state.selectedItem || state.roundResolved}
                     onClick={() => insertAt(position)}
                   >
-                    {position + 1}
+                    <ChevronRight className="h-5 w-5" />
                   </Button>
-                  {placements[position] ? (
-                    <button
-                      className="w-full rounded-xl border border-white/15 bg-slate-900/70 px-3 py-2 text-left font-semibold text-slate-100 transition-colors hover:border-cyan-300/50"
-                      onClick={() => removeAt(position)}
-                      disabled={state.roundResolved || placements[position] === round.fixedItem}
-                    >
-                      {placements[position]}
-                    </button>
-                  ) : null}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
             <div className="mt-2 text-center text-sm font-semibold text-muted-foreground">{round.lowerLabel}</div>
           </CardContent>
@@ -163,7 +206,7 @@ export default function SortierenPage() {
             <CardTitle>Elemente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {remaining.map((item) => (
+            {pool.map((item) => (
               <button
                 key={item}
                 className={`w-full rounded-xl border px-3 py-2 text-left font-semibold ${
@@ -179,9 +222,6 @@ export default function SortierenPage() {
             ))}
 
             <div className="grid grid-cols-1 gap-2 pt-2">
-              <Button onClick={evaluateRound} disabled={placements.length !== round.items.length || state.roundResolved}>
-                Prüfen
-              </Button>
               <Button variant="outline" onClick={revealSolution} disabled={!state.roundResolved}>
                 Richtige Reihenfolge aufdecken
               </Button>

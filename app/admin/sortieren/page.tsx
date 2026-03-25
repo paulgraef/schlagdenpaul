@@ -61,8 +61,10 @@ export default function AdminSortierenPage() {
       sortieren: {
         ...state,
         roundIndex: editorRoundIndex,
-        placements: [round.fixedItem],
+        placements: [],
         selectedItem: null,
+        starterItem: null,
+        poolOrder: [],
         roundResolved: false,
         roundCorrect: null,
         revealSolution: false

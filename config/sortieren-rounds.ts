@@ -15,8 +15,8 @@ export const SORTIEREN_ROUNDS: SortierenRound[] = [
     upperLabel: "früh",
     lowerLabel: "spät",
     fixedItem: "Coca-Cola",
-    items: ["Coca-Cola", "Ford", "Disney", "McDonald's", "Adidas", "Starbucks", "Apple e Bay", "Facebook"],
-    correctOrder: ["Coca-Cola", "Ford", "Disney", "McDonald's", "Adidas", "Starbucks", "Apple e Bay", "Facebook"]
+    items: ["Coca-Cola", "Ford", "Disney", "McDonald's", "Adidas", "Starbucks", "Apple", "eBay", "Facebook"],
+    correctOrder: ["Coca-Cola", "Ford", "Disney", "McDonald's", "Adidas", "Starbucks", "Apple", "eBay", "Facebook"]
   },
   {
     id: "r2",
