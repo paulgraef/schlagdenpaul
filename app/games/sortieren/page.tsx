@@ -156,7 +156,6 @@ export default function SortierenPage() {
                 const item = placements[position];
                 const hasItem = typeof item === "string";
                 const isStarter = hasItem && item === starterItem;
-                const correct = hasItem ? item === order[position] : false;
 
                 return (
                   <div key={`slot-row-${position}`} className="space-y-2">
@@ -173,9 +172,7 @@ export default function SortierenPage() {
                         className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
                           isStarter
                             ? "border-cyan-300/60 bg-cyan-500/10 text-cyan-100"
-                            : correct
-                              ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
-                              : "border-red-400/70 bg-red-500/10 text-red-100"
+                            : "border-white/15 bg-slate-900/70 text-slate-100 hover:border-cyan-300/40"
                         }`}
                         onClick={() => removeAt(position)}
                         disabled={state.roundResolved || isStarter}
