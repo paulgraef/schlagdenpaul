@@ -141,26 +141,6 @@ export default function SortierenPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-4 md:p-6">
-      <Card className="mb-4 border-white/10 bg-black/40">
-        <CardHeader>
-          <CardTitle>
-            Sortieren - Runde {state.roundIndex + 1} / {SORTIEREN_ROUNDS.length}: {round.category}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2 text-sm">
-            <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">
-              Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong>
-            </span>
-            {teams.map((team) => (
-              <span key={team.id} className="rounded border border-white/10 px-2 py-1 text-sm" style={{ color: team.color }}>
-                {team.name}: {state.points[team.id] ?? 0}
-              </span>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card className="border-white/10 bg-black/40">
           <CardContent className="p-4">
@@ -205,7 +185,28 @@ export default function SortierenPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-black/40">
+        <div className="space-y-4">
+          <Card className="border-white/10 bg-black/40">
+            <CardHeader>
+              <CardTitle>
+                Sortieren - Runde {state.roundIndex + 1} / {SORTIEREN_ROUNDS.length}: {round.category}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2 text-sm">
+                <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">
+                  Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong>
+                </span>
+                {teams.map((team) => (
+                  <span key={team.id} className="rounded border border-white/10 px-2 py-1 text-sm" style={{ color: team.color }}>
+                    {team.name}: {state.points[team.id] ?? 0}
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-black/40">
           <CardHeader>
             <CardTitle>Elemente</CardTitle>
           </CardHeader>
@@ -260,7 +261,8 @@ export default function SortierenPage() {
               </div>
             ) : null}
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     </main>
   );
