@@ -22,7 +22,6 @@ const mediaTypeByGameSlug: Partial<Record<string, GameType>> = {
   "flaggen": "media_flaggen",
   "wer-luegt": "media_wer_luegt",
   "deutschland": "deutschland",
-  "sortieren": "media_sortieren",
   "memory": "memory"
 };
 
@@ -33,7 +32,7 @@ const gameSlugOverrides: Record<number, string> = {
   7: "wer-luegt",
   10: "memory",
   12: "muenze",
-  14: "sortieren",
+  13: "sortieren",
   15: "501"
 };
 
