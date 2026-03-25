@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { ChevronRight } from "lucide-react";
 import { SORTIEREN_ROUNDS } from "@/config/sortieren-rounds";
 import { useEventStore } from "@/hooks/use-event-store";
 import { getSortierenRoundOrder, getSortierenState, shuffleStrings } from "@/lib/game-engine/sortieren";
@@ -114,9 +115,6 @@ export default function SortierenPage() {
   }
 
   function revealSolution() {
-    if (!state.roundResolved) {
-      return;
-    }
     persist({ revealSolution: true });
   }
 
@@ -174,60 +172,39 @@ export default function SortierenPage() {
         <Card className="border-white/10 bg-black/40">
           <CardContent className="p-4">
             <div className="mb-2 text-center text-sm font-semibold text-muted-foreground">{round.upperLabel}</div>
-            <div className="space-y-2">
-              {placementButtons.map((position) => (
-                <div key={`slot-row-${position}`} className="grid grid-cols-[1fr_46px] items-center gap-2">
-                  <div>
-                    {position < placements.length ? (
-                      (() => {
-                        const item = placements[position];
-                        const correct = item === order[position];
-                        return (
-                          <button
-                            className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
-                              correct
-                                ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
-                                : "border-red-400/70 bg-red-500/10 text-red-100"
-                            }`}
-                            onClick={() => removeAt(position)}
-                            disabled={state.roundResolved || item === starterItem}
-                          >
-                            {item}
-                          </button>
-                        );
-                      })()
-                    ) : (
-                      <div className="h-[44px]" />
-                    )}
-                  </div>
-                  <button
-                    className="h-[44px] w-[44px] p-0 disabled:cursor-not-allowed disabled:opacity-45"
+            <div className="grid grid-cols-[1fr_46px] gap-2">
+              <div className="space-y-2">
+                {placements.map((item, index) => {
+                  const correct = item === order[index];
+                  return (
+                    <button
+                      key={`${item}-${index}`}
+                      className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
+                        correct
+                          ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
+                          : "border-red-400/70 bg-red-500/10 text-red-100"
+                      }`}
+                      onClick={() => removeAt(index)}
+                      disabled={state.roundResolved || item === starterItem}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="space-y-2">
+                {placementButtons.map((position) => (
+                  <Button
+                    key={`slot-arrow-${position}`}
+                    className="h-[44px] w-[44px] p-0"
+                    variant="outline"
                     disabled={!state.selectedItem || state.roundResolved}
                     onClick={() => insertAt(position)}
-                    aria-label={`Einfügen an Position ${position + 1}`}
                   >
-                    <svg viewBox="0 0 44 44" className="h-[44px] w-[44px]" aria-hidden="true">
-                      <polygon
-                        points="6,22 30,4 30,16 40,16 40,28 30,28 30,40"
-                        fill="rgba(15,23,42,0.88)"
-                        stroke="rgba(148,163,184,0.8)"
-                        strokeWidth="1.2"
-                      />
-                      <text
-                        x="22"
-                        y="24"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fontSize="12"
-                        fontWeight="700"
-                        fill="#f8fafc"
-                      >
-                        {position + 1}
-                      </text>
-                    </svg>
-                  </button>
-                </div>
-              ))}
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                ))}
+              </div>
             </div>
             <div className="mt-2 text-center text-sm font-semibold text-muted-foreground">{round.lowerLabel}</div>
           </CardContent>
@@ -257,13 +234,12 @@ export default function SortierenPage() {
               <Button variant="outline" onClick={resetCurrentRound}>
                 Zurücksetzen
               </Button>
-              <Button variant="outline" onClick={revealSolution} disabled={!state.roundResolved}>
+              <Button variant="outline" onClick={revealSolution}>
                 Richtige Reihenfolge aufdecken
               </Button>
               <Button
                 variant="outline"
                 onClick={nextRound}
-                disabled={!state.roundResolved || state.roundIndex >= SORTIEREN_ROUNDS.length - 1}
               >
                 Nächste Runde
               </Button>
