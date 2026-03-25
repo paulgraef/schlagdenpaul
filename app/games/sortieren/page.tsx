@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { ChevronRight } from "lucide-react";
 import { SORTIEREN_ROUNDS } from "@/config/sortieren-rounds";
 import { useEventStore } from "@/hooks/use-event-store";
 import { getSortierenRoundOrder, getSortierenState, shuffleStrings } from "@/lib/game-engine/sortieren";
@@ -170,35 +169,34 @@ export default function SortierenPage() {
               {placementButtons.map((position) => {
                 const item = placements[position];
                 const hasItem = typeof item === "string";
+                const isStarter = hasItem && item === starterItem;
                 const correct = hasItem ? item === order[position] : false;
 
                 return (
-                  <div key={`slot-row-${position}`} className="grid grid-cols-[1fr_46px] items-center gap-2">
-                    <div>
-                      {hasItem ? (
-                        <button
-                          className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
-                            correct
-                              ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
-                              : "border-red-400/70 bg-red-500/10 text-red-100"
-                          }`}
-                          onClick={() => removeAt(position)}
-                          disabled={state.roundResolved || item === starterItem}
-                        >
-                          {item}
-                        </button>
-                      ) : (
-                        <div className="h-[44px]" />
-                      )}
-                    </div>
+                  <div key={`slot-row-${position}`} className="space-y-2">
                     <Button
-                      className="h-[44px] w-[44px] p-0"
+                      className="h-[40px] w-full text-base font-semibold"
                       variant="outline"
                       disabled={!state.selectedItem || state.roundResolved}
                       onClick={() => insertAt(position)}
                     >
-                      <ChevronRight className="h-5 w-5" />
+                      {position + 1}
                     </Button>
+                    {hasItem ? (
+                      <button
+                        className={`w-full rounded-xl border px-3 py-2 text-left font-semibold transition-colors ${
+                          isStarter
+                            ? "border-cyan-300/60 bg-cyan-500/10 text-cyan-100"
+                            : correct
+                              ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-100"
+                              : "border-red-400/70 bg-red-500/10 text-red-100"
+                        }`}
+                        onClick={() => removeAt(position)}
+                        disabled={state.roundResolved || isStarter}
+                      >
+                        {item}
+                      </button>
+                    ) : null}
                   </div>
                 );
               })}
