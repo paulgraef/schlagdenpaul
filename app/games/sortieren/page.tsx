@@ -24,8 +24,6 @@ export default function SortierenPage() {
   const starterValid = Boolean(state.starterItem && round.items.includes(state.starterItem));
   const starterItem = starterValid ? state.starterItem : null;
   const placements = starterItem ? (state.placements.length ? state.placements : [starterItem]) : [];
-  const currentTeamId = teamIds[state.roundIndex % Math.max(teamIds.length, 1)] ?? null;
-  const currentTeam = teams.find((team) => team.id === currentTeamId) ?? null;
   const remaining = round.items.filter((item) => !placements.includes(item));
   const pool = (state.poolOrder.length ? state.poolOrder : remaining).filter((item) => remaining.includes(item));
   const placementButtons = Array.from({ length: placements.length + 1 }, (_, index) => index);
@@ -160,7 +158,7 @@ export default function SortierenPage() {
                 return (
                   <div key={`slot-row-${position}`} className="space-y-2">
                     <Button
-                      className="h-[40px] w-full text-base font-semibold"
+                      className="h-[26px] w-full text-xs font-semibold"
                       variant="outline"
                       disabled={!state.selectedItem || state.roundResolved}
                       onClick={() => insertAt(position)}
@@ -192,15 +190,10 @@ export default function SortierenPage() {
           <Card className="border-white/10 bg-black/40">
             <CardHeader>
               <CardTitle>
-                Sortieren - Runde {state.roundIndex + 1} / {SORTIEREN_ROUNDS.length}: {round.category}
+                Sortieren - Runde {state.roundIndex + 1} / {SORTIEREN_ROUNDS.length}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex flex-wrap gap-2 text-sm">
-                <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">
-                  Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong>
-                </span>
-              </div>
               <div className="space-y-2">
                 {teams.map((team) => (
                   <div
@@ -225,10 +218,7 @@ export default function SortierenPage() {
           </Card>
 
           <Card className="border-white/10 bg-black/40">
-          <CardHeader>
-            <CardTitle>Elemente</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 pt-6">
             {pool.map((item) => (
               <button
                 key={item}
