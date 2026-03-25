@@ -105,17 +105,17 @@ export default function SortierenPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-4 md:p-6">
-      <Card className="mb-4">
+      <Card className="mb-4 border-white/10 bg-black/40">
         <CardHeader>
           <CardTitle>Sortieren - Runde {state.roundIndex + 1} / {SORTIEREN_ROUNDS.length}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2 text-sm">
-            <span className="rounded bg-black/30 px-2 py-1">Kategorie: {round.category}</span>
-            <span className="rounded bg-black/30 px-2 py-1">
+            <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">Kategorie: {round.category}</span>
+            <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">
               Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong>
             </span>
-            <span className="rounded bg-black/30 px-2 py-1">{round.upperLabel} {"->"} {round.lowerLabel}</span>
+            <span className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1">{round.upperLabel} {"->"} {round.lowerLabel}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {teams.map((team) => (
@@ -128,7 +128,7 @@ export default function SortierenPage() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <Card>
+        <Card className="border-white/10 bg-black/40">
           <CardContent className="p-4">
             <div className="mb-2 text-center text-sm font-semibold text-muted-foreground">{round.upperLabel}</div>
             <div className="space-y-2">
@@ -144,7 +144,7 @@ export default function SortierenPage() {
                   </Button>
                   {placements[position] ? (
                     <button
-                      className="w-full rounded-xl border border-yellow-400/60 bg-yellow-300/90 px-3 py-2 text-left font-semibold text-black"
+                      className="w-full rounded-xl border border-white/15 bg-slate-900/70 px-3 py-2 text-left font-semibold text-slate-100 transition-colors hover:border-cyan-300/50"
                       onClick={() => removeAt(position)}
                       disabled={state.roundResolved || placements[position] === round.fixedItem}
                     >
@@ -158,7 +158,7 @@ export default function SortierenPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-white/10 bg-black/40">
           <CardHeader>
             <CardTitle>Elemente</CardTitle>
           </CardHeader>
@@ -168,8 +168,8 @@ export default function SortierenPage() {
                 key={item}
                 className={`w-full rounded-xl border px-3 py-2 text-left font-semibold ${
                   state.selectedItem === item
-                    ? "border-cyan-300 bg-cyan-400/20"
-                    : "border-yellow-400/60 bg-yellow-300/90 text-black"
+                    ? "border-cyan-300/80 bg-cyan-400/15 text-cyan-100"
+                    : "border-white/15 bg-slate-900/70 text-slate-100 hover:border-cyan-300/40"
                 }`}
                 onClick={() => selectItem(item)}
                 disabled={state.roundResolved}
@@ -205,11 +205,11 @@ export default function SortierenPage() {
             ) : null}
 
             {state.revealSolution ? (
-              <div className="rounded-xl border border-cyan-300/40 bg-cyan-500/10 p-3 text-sm">
+              <div className="rounded-xl border border-cyan-300/40 bg-cyan-500/10 p-3 text-sm text-cyan-100">
                 <p className="mb-2 font-semibold">Richtige Reihenfolge</p>
                 <ol className="space-y-1">
                   {order.map((item, index) => (
-                    <li key={`solution-${item}`} className="rounded border border-white/10 px-2 py-1">
+                    <li key={`solution-${item}`} className="rounded border border-white/10 bg-black/25 px-2 py-1">
                       {index + 1}. {item}
                     </li>
                   ))}

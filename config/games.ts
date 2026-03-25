@@ -12,6 +12,6 @@ export const GAME_TITLES: string[] = [
   "Wettessen",
   "Münze",
   "Sortieren",
-  "Luft anhalten",
-  "501"
+  "Mario Kart",
+  "Schätzen"
 ];

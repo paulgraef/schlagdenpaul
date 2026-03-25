@@ -123,7 +123,7 @@ export const SORTIEREN_ROUNDS: SortierenRound[] = [
     lowerLabel: "niedrig",
     fixedItem: "Mount Everest",
     items: ["Mount Everest", "K2", "Mont Blanc", "Zugspitze", "Teide", "Watzmann", "Brocken", "Feldberg", "Kreuzeck"],
-    correctOrder: ["Mount Everest", "K2", "Mont Blanc", "Zugspitze", "Teide", "Watzmann", "Brocken", "Feldberg", "Kreuzeck"]
+    correctOrder: ["Mount Everest", "K2", "Mont Blanc", "Teide", "Zugspitze", "Watzmann", "Kreuzeck", "Feldberg", "Brocken"]
   },
   {
     id: "r11",
@@ -132,7 +132,7 @@ export const SORTIEREN_ROUNDS: SortierenRound[] = [
     lowerLabel: "spät",
     fixedItem: "TSV 1860 München",
     items: ["TSV 1860 München", "Notts County", "FC Barcelona", "Borussia Dortmund", "Real Madrid", "FC Bayern München", "AS Rom", "FC St. Pauli", "RB Leipzig"],
-    correctOrder: ["TSV 1860 München", "Notts County", "FC Barcelona", "Borussia Dortmund", "Real Madrid", "FC Bayern München", "AS Rom", "FC St. Pauli", "RB Leipzig"]
+    correctOrder: ["TSV 1860 München", "Notts County", "FC Barcelona", "FC Bayern München", "Real Madrid", "Borussia Dortmund", "FC St. Pauli", "AS Rom", "RB Leipzig"]
   },
   {
     id: "r12",
@@ -148,9 +148,9 @@ export const SORTIEREN_ROUNDS: SortierenRound[] = [
     category: "Tiere",
     upperLabel: "schnell",
     lowerLabel: "langsam",
-    fixedItem: "Gepard",
-    items: ["Gepard", "Wanderfalke", "Schwertfisch", "Springbock", "Windhund", "Pferd", "Elefant", "Mensch", "Schildkröte"],
-    correctOrder: ["Gepard", "Wanderfalke", "Schwertfisch", "Springbock", "Windhund", "Pferd", "Elefant", "Mensch", "Schildkröte"]
+    fixedItem: "Wanderfalke",
+    items: ["Wanderfalke", "Gepard", "Springbock", "Pferd", "Windhund", "Mensch", "Elefant", "Nilpferd", "Schildkröte"],
+    correctOrder: ["Wanderfalke", "Gepard", "Springbock", "Pferd", "Windhund", "Mensch", "Elefant", "Nilpferd", "Schildkröte"]
   },
   {
     id: "r14",

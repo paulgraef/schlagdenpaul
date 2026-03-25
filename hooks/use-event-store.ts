@@ -159,8 +159,8 @@ function recalc(snapshot: EventSnapshot): EventSnapshot {
     11: { title: "Wettessen", slug: "wettessen" },
     12: { title: "Münze", slug: "muenze" },
     13: { title: "Sortieren", slug: "sortieren" },
-    14: { title: "Luft anhalten", slug: "luft-anhalten" },
-    15: { title: "501", slug: "501" }
+    14: { title: "Mario Kart", slug: "mario-kart" },
+    15: { title: "Schätzen", slug: "schaetzen" }
   };
 
   const normalizedGames = snapshot.games.map((game) => {
