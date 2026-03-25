@@ -18,16 +18,18 @@ export default function SortierenPage() {
   if (!game) {
     return <main className="p-6">Sortieren-Spiel nicht gefunden.</main>;
   }
-  const gameId = game.id;
 
+  const gameId = game.id;
   const gameState = snapshot.gameStates[gameId];
   const teamIds = teams.map((team) => team.id);
   const state = getSortierenState(gameState?.metadata ?? {}, teamIds);
   const round = SORTIEREN_ROUNDS[state.roundIndex] ?? SORTIEREN_ROUNDS[0];
   const order = getSortierenRoundOrder(round.id, state.overrides);
+  const placements = state.placements.length ? state.placements : [round.fixedItem];
   const currentTeamId = teamIds[state.roundIndex % Math.max(teamIds.length, 1)] ?? null;
   const currentTeam = teams.find((team) => team.id === currentTeamId) ?? null;
-  const remaining = round.items.filter((item) => !state.placements.includes(item));
+  const remaining = round.items.filter((item) => !placements.includes(item));
+  const placementButtons = Array.from({ length: placements.length + 1 }, (_, index) => index);
 
   function persist(next: Partial<typeof state>) {
     setGameMetadata(gameId, {
@@ -49,46 +51,57 @@ export default function SortierenPage() {
     if (!state.selectedItem || state.roundResolved) {
       return;
     }
-    const next = [...state.placements];
+    const next = [...placements];
     next.splice(position, 0, state.selectedItem);
     persist({ placements: next, selectedItem: null });
   }
 
   function removeAt(index: number) {
-    if (state.roundResolved) {
+    if (state.roundResolved || placements[index] === round.fixedItem) {
       return;
     }
-    const next = state.placements.filter((_, position) => position !== index);
+    const next = placements.filter((_, position) => position !== index);
     persist({ placements: next });
   }
 
   function evaluateRound() {
-    if (state.placements.length !== round.items.length || state.roundResolved) {
+    if (placements.length !== round.items.length || state.roundResolved) {
       return;
     }
-    const correct = state.placements.every((item, index) => item === order[index]);
+
+    const correct = placements.every((item, index) => item === order[index]);
     const nextPoints = { ...state.points };
     if (correct && currentTeamId) {
       nextPoints[currentTeamId] = (nextPoints[currentTeamId] ?? 0) + 1;
     }
+
     persist({
       points: nextPoints,
       roundResolved: true,
-      roundCorrect: correct
+      roundCorrect: correct,
+      revealSolution: false
     });
+  }
+
+  function revealSolution() {
+    if (!state.roundResolved) {
+      return;
+    }
+    persist({ revealSolution: true });
   }
 
   function nextRound() {
+    const nextRoundIndex = Math.min(state.roundIndex + 1, SORTIEREN_ROUNDS.length - 1);
+    const nextRound = SORTIEREN_ROUNDS[nextRoundIndex] ?? SORTIEREN_ROUNDS[0];
     persist({
-      roundIndex: Math.min(state.roundIndex + 1, SORTIEREN_ROUNDS.length - 1),
-      placements: [],
+      roundIndex: nextRoundIndex,
+      placements: [nextRound.fixedItem],
       selectedItem: null,
       roundResolved: false,
-      roundCorrect: null
+      roundCorrect: null,
+      revealSolution: false
     });
   }
-
-  const placementButtons = Array.from({ length: state.placements.length + 1 }, (_, index) => index);
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl p-4 md:p-6">
@@ -99,7 +112,9 @@ export default function SortierenPage() {
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2 text-sm">
             <span className="rounded bg-black/30 px-2 py-1">Kategorie: {round.category}</span>
-            <span className="rounded bg-black/30 px-2 py-1">Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong></span>
+            <span className="rounded bg-black/30 px-2 py-1">
+              Team am Zug: <strong style={{ color: currentTeam?.color }}>{currentTeam?.name ?? "-"}</strong>
+            </span>
             <span className="rounded bg-black/30 px-2 py-1">{round.upperLabel} {"->"} {round.lowerLabel}</span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -119,16 +134,21 @@ export default function SortierenPage() {
             <div className="space-y-2">
               {placementButtons.map((position) => (
                 <div key={`slot-${position}`} className="space-y-2">
-                  <Button className="w-full" variant="outline" disabled={!state.selectedItem || state.roundResolved} onClick={() => insertAt(position)}>
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    disabled={!state.selectedItem || state.roundResolved}
+                    onClick={() => insertAt(position)}
+                  >
                     {position + 1}
                   </Button>
-                  {state.placements[position] ? (
+                  {placements[position] ? (
                     <button
                       className="w-full rounded-xl border border-yellow-400/60 bg-yellow-300/90 px-3 py-2 text-left font-semibold text-black"
                       onClick={() => removeAt(position)}
-                      disabled={state.roundResolved}
+                      disabled={state.roundResolved || placements[position] === round.fixedItem}
                     >
-                      {state.placements[position]}
+                      {placements[position]}
                     </button>
                   ) : null}
                 </div>
@@ -158,18 +178,42 @@ export default function SortierenPage() {
               </button>
             ))}
 
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <Button onClick={evaluateRound} disabled={state.placements.length !== round.items.length || state.roundResolved}>
+            <div className="grid grid-cols-1 gap-2 pt-2">
+              <Button onClick={evaluateRound} disabled={placements.length !== round.items.length || state.roundResolved}>
                 Prüfen
               </Button>
-              <Button variant="outline" onClick={nextRound} disabled={!state.roundResolved || state.roundIndex >= SORTIEREN_ROUNDS.length - 1}>
+              <Button variant="outline" onClick={revealSolution} disabled={!state.roundResolved}>
+                Richtige Reihenfolge aufdecken
+              </Button>
+              <Button
+                variant="outline"
+                onClick={nextRound}
+                disabled={!state.roundResolved || state.roundIndex >= SORTIEREN_ROUNDS.length - 1}
+              >
                 Nächste Runde
               </Button>
             </div>
 
             {state.roundResolved ? (
-              <div className={`rounded-xl border p-3 text-sm ${state.roundCorrect ? "border-emerald-400/40 bg-emerald-500/10" : "border-red-400/40 bg-red-500/10"}`}>
+              <div
+                className={`rounded-xl border p-3 text-sm ${
+                  state.roundCorrect ? "border-emerald-400/40 bg-emerald-500/10" : "border-red-400/40 bg-red-500/10"
+                }`}
+              >
                 {state.roundCorrect ? "Richtig sortiert." : "Nicht korrekt sortiert."}
+              </div>
+            ) : null}
+
+            {state.revealSolution ? (
+              <div className="rounded-xl border border-cyan-300/40 bg-cyan-500/10 p-3 text-sm">
+                <p className="mb-2 font-semibold">Richtige Reihenfolge</p>
+                <ol className="space-y-1">
+                  {order.map((item, index) => (
+                    <li key={`solution-${item}`} className="rounded border border-white/10 px-2 py-1">
+                      {index + 1}. {item}
+                    </li>
+                  ))}
+                </ol>
               </div>
             ) : null}
           </CardContent>

@@ -61,10 +61,11 @@ export default function AdminSortierenPage() {
       sortieren: {
         ...state,
         roundIndex: editorRoundIndex,
-        placements: [],
+        placements: [round.fixedItem],
         selectedItem: null,
         roundResolved: false,
-        roundCorrect: null
+        roundCorrect: null,
+        revealSolution: false
       }
     });
   }

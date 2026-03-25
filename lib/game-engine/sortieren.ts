@@ -6,6 +6,7 @@ export interface SortierenState {
   selectedItem: string | null;
   roundResolved: boolean;
   roundCorrect: boolean | null;
+  revealSolution: boolean;
   points: Record<string, number>;
   overrides: Record<string, string[]>;
 }
@@ -41,6 +42,7 @@ export function getSortierenState(metadata: Record<string, unknown>, teamIds: st
   const selectedItem = typeof raw.selectedItem === "string" ? raw.selectedItem : null;
   const roundResolved = Boolean(raw.roundResolved);
   const roundCorrect = typeof raw.roundCorrect === "boolean" ? raw.roundCorrect : null;
+  const revealSolution = Boolean(raw.revealSolution);
 
   const overridesRaw = asRecord(raw.overrides);
   const overrides = Object.fromEntries(
@@ -56,6 +58,7 @@ export function getSortierenState(metadata: Record<string, unknown>, teamIds: st
     selectedItem,
     roundResolved,
     roundCorrect,
+    revealSolution,
     points,
     overrides
   };
