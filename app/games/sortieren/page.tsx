@@ -118,6 +118,20 @@ export default function SortierenPage() {
     });
   }
 
+  function previousRound() {
+    const previousRoundIndex = Math.max(state.roundIndex - 1, 0);
+    persist({
+      roundIndex: previousRoundIndex,
+      placements: [],
+      selectedItem: null,
+      starterItem: null,
+      poolOrder: [],
+      roundResolved: false,
+      roundCorrect: null,
+      revealSolution: false
+    });
+  }
+
   function resetCurrentRound() {
     const randomStarter = round.items[Math.floor(Math.random() * round.items.length)];
     const shuffledPool = shuffleStrings(round.items.filter((item) => item !== randomStarter));
@@ -237,6 +251,9 @@ export default function SortierenPage() {
             <div className="grid grid-cols-1 gap-2 pt-2">
               <Button variant="outline" onClick={resetCurrentRound}>
                 Zurücksetzen
+              </Button>
+              <Button variant="outline" onClick={previousRound}>
+                Runde zurück
               </Button>
               <Button variant="outline" onClick={revealSolution}>
                 Richtige Reihenfolge aufdecken
