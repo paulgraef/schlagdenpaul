@@ -184,12 +184,30 @@ export default function SortierenPage() {
                 {placementButtons.map((position) => (
                   <button
                     key={`slot-arrow-${position}`}
-                    className="relative h-[44px] w-[44px] border border-white/20 bg-slate-900/70 text-sm font-bold text-slate-100 transition hover:border-cyan-300/50 disabled:cursor-not-allowed disabled:opacity-45"
-                    style={{ clipPath: "polygon(8% 50%, 72% 6%, 72% 30%, 96% 30%, 96% 70%, 72% 70%, 72% 94%)" }}
+                    className="h-[44px] w-[44px] p-0 disabled:cursor-not-allowed disabled:opacity-45"
                     disabled={!state.selectedItem || state.roundResolved}
                     onClick={() => insertAt(position)}
+                    aria-label={`Einfügen an Position ${position + 1}`}
                   >
-                    {position + 1}
+                    <svg viewBox="0 0 44 44" className="h-[44px] w-[44px]" aria-hidden="true">
+                      <polygon
+                        points="6,22 30,4 30,16 40,16 40,28 30,28 30,40"
+                        fill="rgba(15,23,42,0.88)"
+                        stroke="rgba(148,163,184,0.8)"
+                        strokeWidth="1.2"
+                      />
+                      <text
+                        x="22"
+                        y="24"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="12"
+                        fontWeight="700"
+                        fill="#f8fafc"
+                      >
+                        {position + 1}
+                      </text>
+                    </svg>
                   </button>
                 ))}
               </div>
